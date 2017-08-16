@@ -1,4 +1,6 @@
 .eunit
+.idea
+*.kdev4
 deps
 *.o
 *.beam
