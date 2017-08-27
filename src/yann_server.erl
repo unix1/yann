@@ -18,7 +18,7 @@ start_link(Options) ->
     gen_server:start_link(?MODULE, {Options}, []).
 
 -spec input(Pid :: pid(), I :: integer(), X :: float()) -> ok.
-input(Pid, X) when is_pid(Pid), is_integer(I), is_float(X) ->
+input(Pid, I, X) when is_pid(Pid), is_integer(I), is_float(X) ->
     ok = gen_server:call(Pid, {input, I, X}).
 
 -spec error() -> ok.
