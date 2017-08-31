@@ -12,7 +12,7 @@
 
 -type state() :: #{weights => weights(), data => data(), data_queue => data()}.
 -type weights() :: list(float()).
--type data() :: any(). % array
+-type data() :: array:array().
 
 %%%%% User functions %%%%%
 
