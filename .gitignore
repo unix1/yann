@@ -7,6 +7,9 @@
 _rel
 deps
 ebin/*.beam
+ebin/test
 erl_crash.dump
-relx
+logs
+relx*
+test/*.beam
 yann.d
