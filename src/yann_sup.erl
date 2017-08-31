@@ -6,16 +6,18 @@
 
 %%%%% Behavior functions %%%%%
 
+-spec start_link() -> {ok, pid()}.
 start_link() ->
     supervisor:start_link({local, ?MODULE}, ?MODULE, []).
 
+-spec init([]) -> {ok, {{supervisor:strategy(), 1, 3600}, [supervisor:child_spec()]}}.
 init([]) ->
     MaxRestart = 1,
     MaxTime = 3600,
-    ChildSpec = {yann_neuron,
-                 {yann_neuron, start_link, [self()]},
+    ChildSpec = {yann_server,
+                 {yann_server, start_link, [self()]},
                  permanent,
                  5000, % shutdown time
                  worker,
-                 [yann_neuron]},
+                 [yann_server]},
     {ok, {{simple_one_for_one, MaxRestart, MaxTime}, [ChildSpec]}}.
