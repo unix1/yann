@@ -13,6 +13,9 @@
 -export([
     yann_server_append_input_to_data_queue_new/1,
     yann_server_append_input_to_data_queue_existing/1,
+    yann_server_initialize_data/1,
+    yann_server_initialize_data_queue/1,
+    yann_server_initialize_weights/1,
     yann_server_input_to_data_or_queue_empty/1,
     yann_server_input_to_data_or_queue_taken/1,
     yann_server_sigmoid/1,
@@ -28,6 +31,9 @@ all() ->
     [
         yann_server_append_input_to_data_queue_new,
         yann_server_append_input_to_data_queue_existing,
+        yann_server_initialize_data,
+        yann_server_initialize_data_queue,
+        yann_server_initialize_weights,
         yann_server_input_to_data_or_queue_empty,
         yann_server_input_to_data_or_queue_taken,
         yann_server_sigmoid,
@@ -64,6 +70,29 @@ yann_server_append_input_to_data_queue_existing(_) ->
     DataQueueActual = yann_server:append_input_to_data_queue(1, 5, DataQueue),
     DataQueueExpected = array:set(1, queue:from_list([2, 3, 5]), array:new(3, {default, queue:new()})),
     array_of_queues_equal(DataQueueActual, DataQueueExpected).
+
+yann_server_initialize_data(_) ->
+    Actual = yann_server:initialize_data(10),
+    Expected = array:set(0, 1, array:new(10)),
+    Expected = Actual.
+
+yann_server_initialize_data_queue(_) ->
+    Actual = yann_server:initialize_data_queue(10),
+    Expected = array:new(10, {default, queue:new()}),
+    Expected = Actual.
+
+yann_server_initialize_weights(_) ->
+    Actual = yann_server:initialize_weights(1000),
+    1000 = length(Actual),
+    lists:foldl(
+        fun(Value, Acc) ->
+            Value >= 0,
+            Value =< 1,
+            ok
+        end,
+        ok,
+        Actual
+    ).
 
 yann_server_input_to_data_or_queue_empty(_) ->
     Data = array:new(3),
