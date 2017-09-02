@@ -55,7 +55,7 @@ init({_Options}) ->
 -spec handle_call({input, integer(), float()}, from(), state()) -> {reply, ok, state()}.
 handle_call({input, I, X}, _From, State = #{weights := Weights, data := Data, data_queue := DataQueue})
         when is_integer(I), I > 0, I < length(Weights) - 1 ->
-    [DataNew, DataQueueNew] = input_to_data_or_queue({I, X}, Data, DataQueue),
+    {DataNew, DataQueueNew} = input_to_data_or_queue({I, X}, Data, DataQueue),
     Full_Data_Length = get_weights_length(State) - 1,
     State_New = case length(array:sparse_to_list(DataNew)) of
         Full_Data_Length ->
@@ -90,37 +90,38 @@ get_weights_length(_State = #{weights := Weights}) ->
 
 %%%%% Library functions %%%%%
 
--spec initialize_data(pos_integer()) -> array:array().
+-spec initialize_data(pos_integer()) -> data().
 initialize_data(N) ->
     array:set(0, 1, array:new(N)).
 
--spec initialize_data_queue(pos_integer()) -> array:array().
+-spec initialize_data_queue(pos_integer()) -> data_queue().
 initialize_data_queue(N) ->
     array:new(N, {default, queue:new()}).
 
--spec initialize_weights(non_neg_integer()) -> [float()].
+-spec initialize_weights(pos_integer()) -> weights().
 initialize_weights(N) when N > 0 ->
     initialize_weights(N, []).
 
--spec initialize_weights(non_neg_integer(), array:array()) -> [float()].
+-spec initialize_weights(pos_integer(), array:array()) -> weights().
 initialize_weights(0, Acc) ->
     Acc;
 initialize_weights(N, Acc) when N > 0 ->
     initialize_weights(N - 1, [rand:uniform() | Acc]).
 
--spec input_to_data_or_queue({non_neg_integer(), float()}, array:array(), array:array()) ->
-    [array:array()].
+-spec input_to_data_or_queue({pos_integer(), float()}, data(), data_queue()) ->
+    {data(), data_queue()}.
 input_to_data_or_queue({I, X}, Data, DataQueue) ->
-    % If spot is open, set in Data
     case array:get(I, Data) of
         undefined ->
-            [array:set(I, X, Data), DataQueue];
+            % If spot is open, set in Data
+            {array:set(I, X, Data), DataQueue};
         _ ->
-            [Data, append_input_to_data_queue(I, X, DataQueue)]
+            % Otherwise, set in data queue
+            {Data, append_input_to_data_queue(I, X, DataQueue)}
     end.
 
--spec append_input_to_data_queue(non_neg_integer(), float(), array:array()) ->
-    array:array().
+-spec append_input_to_data_queue(pos_integer(), float(), data_queue()) ->
+    data_queue().
 append_input_to_data_queue(I, X, DataQueue) ->
     Queue = array:get(I, DataQueue),
     array:set(I, queue:in(X, Queue), DataQueue).

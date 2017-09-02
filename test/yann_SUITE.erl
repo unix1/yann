@@ -97,7 +97,7 @@ yann_server_initialize_weights(_) ->
 yann_server_input_to_data_or_queue_empty(_) ->
     Data = array:new(3),
     DataQueue = array:new(3, {default, queue:new()}),
-    [DataActual, DataQueueActual] = yann_server:input_to_data_or_queue({1, 123}, Data, DataQueue),
+    {DataActual, DataQueueActual} = yann_server:input_to_data_or_queue({1, 123}, Data, DataQueue),
     DataExpected = array:set(1, 123, array:new(3)),
     DataQueueExpected = array:new(3, {default, queue:new()}),
     DataExpected = DataActual,
@@ -106,7 +106,7 @@ yann_server_input_to_data_or_queue_empty(_) ->
 yann_server_input_to_data_or_queue_taken(_) ->
     Data = array:set(1, 111, array:new(3)),
     DataQueue = array:new(3, {default, queue:new()}),
-    [DataActual, DataQueueActual] = yann_server:input_to_data_or_queue({1, 123}, Data, DataQueue),
+    {DataActual, DataQueueActual} = yann_server:input_to_data_or_queue({1, 123}, Data, DataQueue),
     DataExpected = array:set(1, 111, array:new(3)),
     DataQueueExpected = array:set(1, queue:from_list([123]), array:new(3, {default, queue:new()})),
     DataExpected = DataActual,
