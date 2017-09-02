@@ -14,6 +14,8 @@
     yann_server_append_input_to_data_queue_new/1,
     yann_server_append_input_to_data_queue_existing/1,
     yann_server_initialize_data/1,
+    yann_server_initialize_data_from_data_queue_empty/1,
+    yann_server_initialize_data_from_data_queue_existing/1,
     yann_server_initialize_data_queue/1,
     yann_server_initialize_weights/1,
     yann_server_input_to_data_or_queue_empty/1,
@@ -32,6 +34,8 @@ all() ->
         yann_server_append_input_to_data_queue_new,
         yann_server_append_input_to_data_queue_existing,
         yann_server_initialize_data,
+        yann_server_initialize_data_from_data_queue_empty,
+        yann_server_initialize_data_from_data_queue_existing,
         yann_server_initialize_data_queue,
         yann_server_initialize_weights,
         yann_server_input_to_data_or_queue_empty,
@@ -75,6 +79,32 @@ yann_server_initialize_data(_) ->
     Actual = yann_server:initialize_data(10),
     Expected = array:set(0, 1, array:new(10)),
     Expected = Actual.
+
+yann_server_initialize_data_from_data_queue_empty(_) ->
+    DataQueue = yann_server:initialize_data_queue(2),
+    % Confirm nothing has changed
+    DataExpected = yann_server:initialize_data(3),
+    {DataExpected, DataQueue} = yann_server:initialize_data_from_data_queue(DataQueue).
+
+yann_server_initialize_data_from_data_queue_existing(_) ->
+    DataQueue0 = yann_server:initialize_data_queue(3),
+    DataQueue1 = array:set(0, queue:in(3.0, queue:in(2.0, queue:in(1.0, queue:new()))), DataQueue0),
+    DataQueue2 = array:set(1, queue:new(), DataQueue1),
+    DataQueue3 = array:set(2, queue:in(5.0, queue:new()), DataQueue2),
+    DataQueue = DataQueue3,
+    DataExpected0 = yann_server:initialize_data(4),
+    DataExpected1 = array:set(1, 1.0, DataExpected0),
+    DataExpected2 = array:set(2, undefined, DataExpected1),
+    DataExpected3 = array:set(3, 5.0, DataExpected2),
+    DataExpected = DataExpected3,
+    DataQueueExpected0 = yann_server:initialize_data_queue(3),
+    DataQueueExpected1 = array:set(0, queue:in(3.0, queue:in(2.0, queue:new())), DataQueueExpected0),
+    DataQueueExpected2 = array:set(1, queue:new(), DataQueueExpected1),
+    DataQueueExpected3 = array:set(2, queue:new(), DataQueueExpected2),
+    DataQueueExpected = DataQueueExpected3,
+    {DataActual, DataQueueActual} = yann_server:initialize_data_from_data_queue(DataQueue),
+    DataExpected = DataActual,
+    array_of_queues_equal(DataQueueExpected, DataQueueActual).
 
 yann_server_initialize_data_queue(_) ->
     Actual = yann_server:initialize_data_queue(10),

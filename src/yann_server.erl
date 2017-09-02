@@ -62,9 +62,8 @@ handle_call({input, I, X}, _From, State = #{weights := Weights, data := Data, da
             Z = weighted_sum(Weights, array:to_list(DataNew)),
             _A = sigmoid(Z),
             % TODO (4) send A to all connected neurons from next layer
-            % resets data
-            % TODO (1) pop from queue here for each I
-            State#{data := initialize_data(Full_Data_Length)};
+            {DataNew, DataQueueNew} = initialize_data_from_data_queue(DataQueue),
+            State#{data := DataNew, data_queue := DataQueueNew};
         _ ->
             State#{data := DataNew, data_queue := DataQueueNew}
     end,
@@ -93,6 +92,25 @@ get_weights_length(_State = #{weights := Weights}) ->
 -spec initialize_data(pos_integer()) -> data().
 initialize_data(N) ->
     array:set(0, 1, array:new(N)).
+
+-spec initialize_data_from_data_queue(data_queue()) -> {data(), data_queue()}.
+initialize_data_from_data_queue(DataQueue) ->
+    DataInitial = initialize_data(array:size(DataQueue) + 1),
+    array:foldl(
+        fun(Index, Queue, {DataAcc, DataQueueAcc}) ->
+            case queue:is_empty(Queue) of
+                true ->
+                    {DataAcc, DataQueueAcc};
+                _ ->
+                    {{value, Item}, QueueNew} = queue:out(Queue),
+                    DataQueueNew = array:set(Index, QueueNew, DataQueueAcc),
+                    DataNew = array:set(Index + 1, Item, DataAcc),
+                    {DataNew, DataQueueNew}
+            end
+        end,
+        {DataInitial, DataQueue},
+        DataQueue
+    ).
 
 -spec initialize_data_queue(pos_integer()) -> data_queue().
 initialize_data_queue(N) ->
