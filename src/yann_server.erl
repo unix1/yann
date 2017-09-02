@@ -64,7 +64,7 @@ handle_call({input, I, X}, _From, State = #{weights := Weights, data := Data, da
             % TODO (4) send A to all connected neurons from next layer
             % resets data
             % TODO (1) pop from queue here for each I
-            State#{data := initialize_data(length(Weights))};
+            State#{data := initialize_data(Full_Data_Length)};
         _ ->
             State#{data := DataNew, data_queue := DataQueueNew}
     end,
