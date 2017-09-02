@@ -11,7 +11,13 @@
 
 %% Tests
 -export([
-    yann_server_start/1
+    yann_server_append_input_to_data_queue_new/1,
+    yann_server_append_input_to_data_queue_existing/1,
+    yann_server_input_to_data_or_queue_empty/1,
+    yann_server_input_to_data_or_queue_taken/1,
+    yann_server_sigmoid/1,
+    yann_server_start/1,
+    yann_server_weighted_sum/1
 ]).
 
 %%====================================================================
@@ -20,7 +26,13 @@
 
 all() ->
     [
-        yann_server_start
+        yann_server_append_input_to_data_queue_new,
+        yann_server_append_input_to_data_queue_existing,
+        yann_server_input_to_data_or_queue_empty,
+        yann_server_input_to_data_or_queue_taken,
+        yann_server_sigmoid,
+        yann_server_start,
+        yann_server_weighted_sum
     ].
 
 init_per_suite(Config) ->
@@ -41,6 +53,61 @@ end_per_testcase(_, _Config) ->
 %% Tests
 %%====================================================================
 
+yann_server_append_input_to_data_queue_new(_) ->
+    DataQueue = array:set(1, queue:from_list([2,3]), array:new(3, {default, queue:new()})),
+    DataQueueActual = yann_server:append_input_to_data_queue(0, 5, DataQueue),
+    DataQueueExpected = array:set(0, queue:from_list([5]), array:set(1, queue:from_list([2, 3]), array:new(3, {default, queue:new()}))),
+    DataQueueExpected = DataQueueActual.
+
+yann_server_append_input_to_data_queue_existing(_) ->
+    DataQueue = array:set(1, queue:from_list([2,3]), array:new(3, {default, queue:new()})),
+    DataQueueActual = yann_server:append_input_to_data_queue(1, 5, DataQueue),
+    DataQueueExpected = array:set(1, queue:from_list([2, 3, 5]), array:new(3, {default, queue:new()})),
+    array_of_queues_equal(DataQueueActual, DataQueueExpected).
+
+yann_server_input_to_data_or_queue_empty(_) ->
+    Data = array:new(3),
+    DataQueue = array:new(3, {default, queue:new()}),
+    [DataActual, DataQueueActual] = yann_server:input_to_data_or_queue({1, 123}, Data, DataQueue),
+    DataExpected = array:set(1, 123, array:new(3)),
+    DataQueueExpected = array:new(3, {default, queue:new()}),
+    DataExpected = DataActual,
+    array_of_queues_equal(DataQueueExpected, DataQueueActual).
+
+yann_server_input_to_data_or_queue_taken(_) ->
+    Data = array:set(1, 111, array:new(3)),
+    DataQueue = array:new(3, {default, queue:new()}),
+    [DataActual, DataQueueActual] = yann_server:input_to_data_or_queue({1, 123}, Data, DataQueue),
+    DataExpected = array:set(1, 111, array:new(3)),
+    DataQueueExpected = array:set(1, queue:from_list([123]), array:new(3, {default, queue:new()})),
+    DataExpected = DataActual,
+    array_of_queues_equal(DataQueueExpected, DataQueueActual).
+
+yann_server_sigmoid(_) ->
+    1.0 = yann_server:sigmoid(99),
+    0.5 = yann_server:sigmoid(0).
+
 yann_server_start(_) ->
     {ok, _Pid} = supervisor:start_child(yann_sup, []).
 
+yann_server_weighted_sum(_) ->
+    2.0 = yann_server:weighted_sum([1.2, 2.0, 4.0, -1.0], [5.0, 3.0, -2.0, 2.0]),
+    0.0 = yann_server:weighted_sum([], []).
+
+%%====================================================================
+%% Private
+%%====================================================================
+
+array_of_queues_equal(Array1, Array2) ->
+    Array1Size = array:size(Array1),
+    ArraySize2 = array:size(Array2),
+    ArraySize1 = ArraySize2,
+    ok = array:foldl(
+        fun(Index, Value, Acc) ->
+            ValueList = queue:to_list(Value),
+            ValueList = queue:to_list(array:get(Index, Array2)),
+            Acc
+        end,
+        ok,
+        Array1
+    ).
