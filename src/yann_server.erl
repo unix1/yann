@@ -2,10 +2,6 @@
 
 -behaviour(gen_server).
 
--ifdef(TEST).
--compile(export_all).
--endif.
-
 -export([start_link/1, init/1]).
 -export([code_change/3, handle_call/3, handle_cast/2, handle_info/2, terminate/2]).
 
@@ -15,6 +11,10 @@
 -type weights() :: list(float()).
 -type data() :: array:array(). % array of floats
 -type data_queue() :: array:array(). % array of queues
+
+-ifdef(TEST).
+-compile(export_all).
+-endif.
 
 %%%%% User functions %%%%%
 
@@ -28,7 +28,7 @@ input(Pid, I, X) when is_pid(Pid), is_integer(I), is_float(X) ->
 
 -spec error(Pid :: pid()) -> ok.
 error(Pid) ->
-    % TODO (2) specify input for error
+    % TODO (5) specify input for error
     % TODO (5) call gen_server to compute error and notify previous layer neurons
     ok = gen_server:call(Pid, {error}).
 
@@ -36,12 +36,13 @@ error(Pid) ->
 
 -spec init(tuple()) -> {ok, state()}.
 init({_Options}) ->
+    % TODO (1) neuron connections
     % TODO (3) add options:
     %       - layer (input, hidden, output)
     %       - connected neuron Pids from previous layer
     %       - use number of inputs
     %       - connected neuron Pids from next layer
-    % TODO other options:
+    % TODO (6) other options:
     %       - type of activation function
     %       - preset weights
     NumberOfInputs = 10,
@@ -57,17 +58,19 @@ handle_call({input, I, X}, _From, State = #{weights := Weights, data := Data, da
         when is_integer(I), I > 0, I < length(Weights) - 1 ->
     {DataNew, DataQueueNew} = input_to_data_or_queue({I, X}, Data, DataQueue),
     Full_Data_Length = get_weights_length(State) - 1,
-    State_New = case length(array:sparse_to_list(DataNew)) of
+    StateNew = case length(array:sparse_to_list(DataNew)) of
         Full_Data_Length ->
             Z = weighted_sum(Weights, array:to_list(DataNew)),
             _A = sigmoid(Z),
             % TODO (4) send A to all connected neurons from next layer
+            % TODO (4) how to check/send again if ready after refill from queue?
+            % TODO (4) probably create a recursive function that sends until not ready
             {DataNew, DataQueueNew} = initialize_data_from_data_queue(DataQueue),
             State#{data := DataNew, data_queue := DataQueueNew};
         _ ->
             State#{data := DataNew, data_queue := DataQueueNew}
     end,
-    {reply, ok, State_New}.
+    {reply, ok, StateNew}.
 
 -spec handle_cast(_, State) -> {noreply, State} when State::state().
 handle_cast(_Msg, State) -> {noreply, State}.

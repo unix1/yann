@@ -115,7 +115,7 @@ yann_server_initialize_weights(_) ->
     Actual = yann_server:initialize_weights(1000),
     1000 = length(Actual),
     lists:foldl(
-        fun(Value, Acc) ->
+        fun(Value, ok) ->
             Value >= 0,
             Value =< 1,
             ok
