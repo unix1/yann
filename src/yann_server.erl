@@ -5,12 +5,13 @@
 -export([start_link/1, init/1]).
 -export([code_change/3, handle_call/3, handle_cast/2, handle_info/2, terminate/2]).
 
--export([input/3, error/1]).
+-export([input/2, error/1]).
 
 -type state() :: #{weights => weights(), data => data(), data_queue => data_queue()}.
--type weights() :: list(float()).
+-type weights() :: [float()].
 -type data() :: array:array(). % array of floats
 -type data_queue() :: array:array(). % array of queues
+-type input() :: {pos_integer(), float()}.
 
 -ifdef(TEST).
 -compile(export_all).
@@ -22,9 +23,9 @@
 start_link(Options) ->
     gen_server:start_link(?MODULE, {Options}, []).
 
--spec input(Pid :: pid(), I :: integer(), X :: float()) -> ok.
-input(Pid, I, X) when is_pid(Pid), is_integer(I), is_float(X) ->
-    ok = gen_server:call(Pid, {input, I, X}).
+-spec input(pid(), input()) -> ok.
+input(Pid, {I, X}) when is_pid(Pid), is_integer(I), I > 0, is_float(X) ->
+    ok = gen_server:call(Pid, {input, {I, X}}).
 
 -spec error(Pid :: pid()) -> ok.
 error(Pid) ->
@@ -34,7 +35,7 @@ error(Pid) ->
 
 %%%%% Behavior functions %%%%%
 
--spec init(tuple()) -> {ok, state()}.
+-spec init({_}) -> {ok, state()}.
 init({_Options}) ->
     % TODO (1) neuron connections
     % TODO (3) add options:
@@ -53,11 +54,11 @@ init({_Options}) ->
     {ok, State}.
 
 -type from() :: {pid(), term()}.
--spec handle_call({input, integer(), float()}, from(), state()) -> {reply, ok, state()}.
-handle_call({input, I, X}, _From, State = #{weights := Weights, data := Data, data_queue := DataQueue})
-        when is_integer(I), I > 0, I < length(Weights) - 1 ->
+-spec handle_call({input, input()}, from(), state()) -> {reply, ok, state()}.
+handle_call({input, {I, X}}, _From, State = #{weights := Weights, data := Data, data_queue := DataQueue})
+        when is_integer(I), I > 0, I < length(Weights) ->
     {DataNew, DataQueueNew} = input_to_data_or_queue({I, X}, Data, DataQueue),
-    Full_Data_Length = get_weights_length(State) - 1,
+    Full_Data_Length = length(Weights),
     StateNew = case length(array:sparse_to_list(DataNew)) of
         Full_Data_Length ->
             Z = weighted_sum(Weights, array:to_list(DataNew)),
@@ -84,16 +85,10 @@ terminate(_Reason, _State) -> ok.
 -spec code_change(_, State, _) -> {ok, State} when State::state().
 code_change(_OldVersion, State, _Extra) -> {ok, State}.
 
-%%%%% State functions %%%%%
-
--spec get_weights_length(state()) -> non_neg_integer().
-get_weights_length(_State = #{weights := Weights}) ->
-    length(Weights).
-
 %%%%% Library functions %%%%%
 
 -spec initialize_data(pos_integer()) -> data().
-initialize_data(N) ->
+initialize_data(N) when is_integer(N), N > 0 ->
     array:set(0, 1, array:new(N)).
 
 -spec initialize_data_from_data_queue(data_queue()) -> {data(), data_queue()}.
@@ -116,34 +111,36 @@ initialize_data_from_data_queue(DataQueue) ->
     ).
 
 -spec initialize_data_queue(pos_integer()) -> data_queue().
-initialize_data_queue(N) ->
+initialize_data_queue(N) when is_integer(N), N > 0 ->
     array:new(N, {default, queue:new()}).
 
 -spec initialize_weights(pos_integer()) -> weights().
-initialize_weights(N) when N > 0 ->
+initialize_weights(N) when is_integer(N), N > 0 ->
     initialize_weights(N, []).
 
--spec initialize_weights(pos_integer(), [float()]) -> weights().
-initialize_weights(0, Acc) ->
+-spec initialize_weights(non_neg_integer(), [float()]) -> weights().
+initialize_weights(0, Acc) when is_list(Acc) ->
     Acc;
-initialize_weights(N, Acc) when N > 0 ->
+initialize_weights(N, Acc) when is_integer(N), N > 0, is_list(Acc) ->
     initialize_weights(N - 1, [rand:uniform() | Acc]).
 
--spec input_to_data_or_queue({pos_integer(), float()}, data(), data_queue()) ->
+-spec input_to_data_or_queue(input(), data(), data_queue()) ->
     {data(), data_queue()}.
-input_to_data_or_queue({I, X}, Data, DataQueue) ->
+input_to_data_or_queue({I, X}, Data, DataQueue)
+        when is_integer(I), I > 0, is_float(X) ->
     case array:get(I, Data) of
         undefined ->
             % If spot is open, set in Data
             {array:set(I, X, Data), DataQueue};
         _ ->
             % Otherwise, set in data queue
-            {Data, append_input_to_data_queue(I, X, DataQueue)}
+            {Data, append_input_to_data_queue({I, X}, DataQueue)}
     end.
 
--spec append_input_to_data_queue(pos_integer(), float(), data_queue()) ->
+-spec append_input_to_data_queue(input(), data_queue()) ->
     data_queue().
-append_input_to_data_queue(I, X, DataQueue) ->
+append_input_to_data_queue({I, X}, DataQueue)
+        when is_integer(I), I > 0, is_float(X) ->
     Queue = array:get(I, DataQueue),
     array:set(I, queue:in(X, Queue), DataQueue).
 
@@ -155,10 +152,10 @@ weighted_sum(Theta, X) when length(Theta) =:= length(X) ->
 weighted_sum([], [], Acc) when is_float(Acc) ->
     Acc;
 weighted_sum(Theta = [Theta_current | Theta_rest], X = [X_current | X_rest], Acc)
-        when length(Theta) =:= length(X), is_float(Theta_current),
-            is_float(X_current), is_float(Acc) ->
+        when is_float(Theta_current), is_float(X_current),
+            length(Theta) =:= length(X), is_float(Acc) ->
     weighted_sum(Theta_rest, X_rest, Acc + Theta_current * X_current).
 
 -spec sigmoid(float()) -> float().
-sigmoid(Z) ->
+sigmoid(Z) when is_float(Z) ->
     1 / (1 + math:exp(-Z)).
