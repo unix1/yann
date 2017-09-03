@@ -73,7 +73,7 @@ yann_server_append_input_to_data_queue_existing(_) ->
     DataQueue = array:set(1, queue:from_list([2, 3]), array:new(3, {default, queue:new()})),
     DataQueueActual = yann_server:append_input_to_data_queue({1, 5.5}, DataQueue),
     DataQueueExpected = array:set(1, queue:from_list([2, 3, 5.5]), array:new(3, {default, queue:new()})),
-    array_of_queues_equal(DataQueueActual, DataQueueExpected).
+    arrays_of_queues_equal(DataQueueActual, DataQueueExpected).
 
 yann_server_initialize_data(_) ->
     Actual = yann_server:initialize_data(10),
@@ -104,7 +104,7 @@ yann_server_initialize_data_from_data_queue_existing(_) ->
     DataQueueExpected = DataQueueExpected3,
     {DataActual, DataQueueActual} = yann_server:initialize_data_from_data_queue(DataQueue),
     DataExpected = DataActual,
-    array_of_queues_equal(DataQueueExpected, DataQueueActual).
+    arrays_of_queues_equal(DataQueueExpected, DataQueueActual).
 
 yann_server_initialize_data_queue(_) ->
     Actual = yann_server:initialize_data_queue(10),
@@ -131,7 +131,7 @@ yann_server_input_to_data_or_queue_empty(_) ->
     DataExpected = array:set(1, 123.4, array:new(3)),
     DataQueueExpected = array:new(3, {default, queue:new()}),
     DataExpected = DataActual,
-    array_of_queues_equal(DataQueueExpected, DataQueueActual).
+    arrays_of_queues_equal(DataQueueExpected, DataQueueActual).
 
 yann_server_input_to_data_or_queue_taken(_) ->
     Data = array:set(1, 111.1, array:new(3)),
@@ -140,7 +140,7 @@ yann_server_input_to_data_or_queue_taken(_) ->
     DataExpected = array:set(1, 111.1, array:new(3)),
     DataQueueExpected = array:set(1, queue:from_list([123.4]), array:new(3, {default, queue:new()})),
     DataExpected = DataActual,
-    array_of_queues_equal(DataQueueExpected, DataQueueActual).
+    arrays_of_queues_equal(DataQueueExpected, DataQueueActual).
 
 yann_server_sigmoid(_) ->
     1.0 = yann_server:sigmoid(99.9),
@@ -157,8 +157,8 @@ yann_server_weighted_sum(_) ->
 %% Private
 %%====================================================================
 
-array_of_queues_equal(Array1, Array2) ->
-    Array1Size = array:size(Array1),
+arrays_of_queues_equal(Array1, Array2) ->
+    ArraySize1 = array:size(Array1),
     ArraySize2 = array:size(Array2),
     ArraySize1 = ArraySize2,
     ok = array:foldl(
