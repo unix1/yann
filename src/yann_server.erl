@@ -123,7 +123,7 @@ initialize_data_queue(N) ->
 initialize_weights(N) when N > 0 ->
     initialize_weights(N, []).
 
--spec initialize_weights(pos_integer(), array:array()) -> weights().
+-spec initialize_weights(pos_integer(), [float()]) -> weights().
 initialize_weights(0, Acc) ->
     Acc;
 initialize_weights(N, Acc) when N > 0 ->
