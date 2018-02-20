@@ -11,18 +11,18 @@
 
 %% Tests
 -export([
-    yann_server_append_input_to_data_queue_new/1,
-    yann_server_append_input_to_data_queue_existing/1,
-    yann_server_initialize_data/1,
-    yann_server_initialize_data_from_data_queue_empty/1,
-    yann_server_initialize_data_from_data_queue_existing/1,
-    yann_server_initialize_data_queue/1,
-    yann_server_initialize_weights/1,
-    yann_server_input_to_data_or_queue_empty/1,
-    yann_server_input_to_data_or_queue_taken/1,
-    yann_server_sigmoid/1,
-    yann_server_start/1,
-    yann_server_weighted_sum/1
+    yann_neuron_append_input_to_data_queue_new/1,
+    yann_neuron_append_input_to_data_queue_existing/1,
+    yann_neuron_initialize_data/1,
+    yann_neuron_initialize_data_from_data_queue_empty/1,
+    yann_neuron_initialize_data_from_data_queue_existing/1,
+    yann_neuron_initialize_data_queue/1,
+    yann_neuron_initialize_weights/1,
+    yann_neuron_input_to_data_or_queue_empty/1,
+    yann_neuron_input_to_data_or_queue_taken/1,
+    yann_neuron_sigmoid/1,
+    yann_neuron_start/1,
+    yann_neuron_weighted_sum/1
 ]).
 
 %%====================================================================
@@ -31,18 +31,18 @@
 
 all() ->
     [
-        yann_server_append_input_to_data_queue_new,
-        yann_server_append_input_to_data_queue_existing,
-        yann_server_initialize_data,
-        yann_server_initialize_data_from_data_queue_empty,
-        yann_server_initialize_data_from_data_queue_existing,
-        yann_server_initialize_data_queue,
-        yann_server_initialize_weights,
-        yann_server_input_to_data_or_queue_empty,
-        yann_server_input_to_data_or_queue_taken,
-        yann_server_sigmoid,
-        yann_server_start,
-        yann_server_weighted_sum
+        yann_neuron_append_input_to_data_queue_new,
+        yann_neuron_append_input_to_data_queue_existing,
+        yann_neuron_initialize_data,
+        yann_neuron_initialize_data_from_data_queue_empty,
+        yann_neuron_initialize_data_from_data_queue_existing,
+        yann_neuron_initialize_data_queue,
+        yann_neuron_initialize_weights,
+        yann_neuron_input_to_data_or_queue_empty,
+        yann_neuron_input_to_data_or_queue_taken,
+        yann_neuron_sigmoid,
+        yann_neuron_start,
+        yann_neuron_weighted_sum
     ].
 
 init_per_suite(Config) ->
@@ -63,56 +63,56 @@ end_per_testcase(_, _Config) ->
 %% Tests
 %%====================================================================
 
-yann_server_append_input_to_data_queue_new(_) ->
+yann_neuron_append_input_to_data_queue_new(_) ->
     DataQueue = array:set(1, queue:from_list([2, 3]), array:new(3, {default, queue:new()})),
-    DataQueueActual = yann_server:append_input_to_data_queue({2, 5.5}, DataQueue),
+    DataQueueActual = yann_neuron:append_input_to_data_queue({2, 5.5}, DataQueue),
     DataQueueExpected = array:set(2, queue:from_list([5.5]), array:set(1, queue:from_list([2, 3]), array:new(3, {default, queue:new()}))),
     DataQueueExpected = DataQueueActual.
 
-yann_server_append_input_to_data_queue_existing(_) ->
+yann_neuron_append_input_to_data_queue_existing(_) ->
     DataQueue = array:set(1, queue:from_list([2, 3]), array:new(3, {default, queue:new()})),
-    DataQueueActual = yann_server:append_input_to_data_queue({1, 5.5}, DataQueue),
+    DataQueueActual = yann_neuron:append_input_to_data_queue({1, 5.5}, DataQueue),
     DataQueueExpected = array:set(1, queue:from_list([2, 3, 5.5]), array:new(3, {default, queue:new()})),
     arrays_of_queues_equal(DataQueueActual, DataQueueExpected).
 
-yann_server_initialize_data(_) ->
-    Actual = yann_server:initialize_data(10),
+yann_neuron_initialize_data(_) ->
+    Actual = yann_neuron:initialize_data(10),
     Expected = array:set(0, 1, array:new(10)),
     Expected = Actual.
 
-yann_server_initialize_data_from_data_queue_empty(_) ->
-    DataQueue = yann_server:initialize_data_queue(2),
+yann_neuron_initialize_data_from_data_queue_empty(_) ->
+    DataQueue = yann_neuron:initialize_data_queue(2),
     % Confirm nothing has changed
-    DataExpected = yann_server:initialize_data(3),
-    {DataExpected, DataQueue} = yann_server:initialize_data_from_data_queue(DataQueue).
+    DataExpected = yann_neuron:initialize_data(3),
+    {DataExpected, DataQueue} = yann_neuron:initialize_data_from_data_queue(DataQueue).
 
-yann_server_initialize_data_from_data_queue_existing(_) ->
-    DataQueue0 = yann_server:initialize_data_queue(3),
+yann_neuron_initialize_data_from_data_queue_existing(_) ->
+    DataQueue0 = yann_neuron:initialize_data_queue(3),
     DataQueue1 = array:set(0, queue:in(3.0, queue:in(2.0, queue:in(1.0, queue:new()))), DataQueue0),
     DataQueue2 = array:set(1, queue:new(), DataQueue1),
     DataQueue3 = array:set(2, queue:in(5.0, queue:new()), DataQueue2),
     DataQueue = DataQueue3,
-    DataExpected0 = yann_server:initialize_data(4),
+    DataExpected0 = yann_neuron:initialize_data(4),
     DataExpected1 = array:set(1, 1.0, DataExpected0),
     DataExpected2 = array:set(2, undefined, DataExpected1),
     DataExpected3 = array:set(3, 5.0, DataExpected2),
     DataExpected = DataExpected3,
-    DataQueueExpected0 = yann_server:initialize_data_queue(3),
+    DataQueueExpected0 = yann_neuron:initialize_data_queue(3),
     DataQueueExpected1 = array:set(0, queue:in(3.0, queue:in(2.0, queue:new())), DataQueueExpected0),
     DataQueueExpected2 = array:set(1, queue:new(), DataQueueExpected1),
     DataQueueExpected3 = array:set(2, queue:new(), DataQueueExpected2),
     DataQueueExpected = DataQueueExpected3,
-    {DataActual, DataQueueActual} = yann_server:initialize_data_from_data_queue(DataQueue),
+    {DataActual, DataQueueActual} = yann_neuron:initialize_data_from_data_queue(DataQueue),
     DataExpected = DataActual,
     arrays_of_queues_equal(DataQueueExpected, DataQueueActual).
 
-yann_server_initialize_data_queue(_) ->
-    Actual = yann_server:initialize_data_queue(10),
+yann_neuron_initialize_data_queue(_) ->
+    Actual = yann_neuron:initialize_data_queue(10),
     Expected = array:new(10, {default, queue:new()}),
     Expected = Actual.
 
-yann_server_initialize_weights(_) ->
-    Actual = yann_server:initialize_weights(1000),
+yann_neuron_initialize_weights(_) ->
+    Actual = yann_neuron:initialize_weights(1000),
     1000 = length(Actual),
     lists:foldl(
         fun(Value, ok) ->
@@ -124,34 +124,34 @@ yann_server_initialize_weights(_) ->
         Actual
     ).
 
-yann_server_input_to_data_or_queue_empty(_) ->
+yann_neuron_input_to_data_or_queue_empty(_) ->
     Data = array:new(3),
     DataQueue = array:new(3, {default, queue:new()}),
-    {DataActual, DataQueueActual} = yann_server:input_to_data_or_queue({1, 123.4}, Data, DataQueue),
+    {DataActual, DataQueueActual} = yann_neuron:input_to_data_or_queue({1, 123.4}, Data, DataQueue),
     DataExpected = array:set(1, 123.4, array:new(3)),
     DataQueueExpected = array:new(3, {default, queue:new()}),
     DataExpected = DataActual,
     arrays_of_queues_equal(DataQueueExpected, DataQueueActual).
 
-yann_server_input_to_data_or_queue_taken(_) ->
+yann_neuron_input_to_data_or_queue_taken(_) ->
     Data = array:set(1, 111.1, array:new(3)),
     DataQueue = array:new(3, {default, queue:new()}),
-    {DataActual, DataQueueActual} = yann_server:input_to_data_or_queue({1, 123.4}, Data, DataQueue),
+    {DataActual, DataQueueActual} = yann_neuron:input_to_data_or_queue({1, 123.4}, Data, DataQueue),
     DataExpected = array:set(1, 111.1, array:new(3)),
     DataQueueExpected = array:set(1, queue:from_list([123.4]), array:new(3, {default, queue:new()})),
     DataExpected = DataActual,
     arrays_of_queues_equal(DataQueueExpected, DataQueueActual).
 
-yann_server_sigmoid(_) ->
-    1.0 = yann_server:sigmoid(99.9),
-    0.5 = yann_server:sigmoid(0.0).
+yann_neuron_sigmoid(_) ->
+    1.0 = yann_neuron:sigmoid(99.9),
+    0.5 = yann_neuron:sigmoid(0.0).
 
-yann_server_start(_) ->
-    {ok, _Pid} = supervisor:start_child(yann_sup, []).
+yann_neuron_start(_) ->
+    {ok, _Pid} = supervisor:start_child(yann_neuron_sup, []).
 
-yann_server_weighted_sum(_) ->
-    2.0 = yann_server:weighted_sum([1.2, 2.0, 4.0, -1.0], [5.0, 3.0, -2.0, 2.0]),
-    0.0 = yann_server:weighted_sum([], []).
+yann_neuron_weighted_sum(_) ->
+    2.0 = yann_neuron:weighted_sum([1.2, 2.0, 4.0, -1.0], [5.0, 3.0, -2.0, 2.0]),
+    0.0 = yann_neuron:weighted_sum([], []).
 
 %%====================================================================
 %% Private

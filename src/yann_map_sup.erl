@@ -1,4 +1,4 @@
--module(yann_sup).
+-module(yann_map_sup).
 -behaviour(supervisor).
 
 -export([start_link/0]).
@@ -29,6 +29,5 @@ init([]) ->
 %% @end
 -spec children() -> [supervisor:child_spec()].
 children() ->
-    NeuronSup = ?CHILD(yann_neuron_sup, yann_neuron_sup, [], supervisor),
-    MapSup = ?CHILD(yann_map_sup, yann_map_sup, [], supervisor),
-    [NeuronSup, MapSup].
+    MapServer = ?CHILD(yann_map_server, yann_map_server, [], worker),
+    [MapServer].
