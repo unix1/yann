@@ -11,6 +11,9 @@
 
 %% Tests
 -export([
+    yann_layout_new/1
+]).
+-export([
     yann_neuron_append_input_to_data_queue_new/1,
     yann_neuron_append_input_to_data_queue_existing/1,
     yann_neuron_initialize_data/1,
@@ -31,6 +34,7 @@
 
 all() ->
     [
+        yann_layout_new,
         yann_neuron_append_input_to_data_queue_new,
         yann_neuron_append_input_to_data_queue_existing,
         yann_neuron_initialize_data,
@@ -62,6 +66,16 @@ end_per_testcase(_, _Config) ->
 %%====================================================================
 %% Tests
 %%====================================================================
+
+yann_layout_new(_) ->
+    Layers = [
+        #{type => 'input', number_of_neurons => 3},
+        #{type => 'hidden', number_of_neurons => 10},
+        #{type => 'output', number_of_neurons => 5}
+    ],
+    Layout = yann_layout:new(Layers),
+    Length = length(Layers),
+    Length = yann_layout:get_number_of_layers(Layout).
 
 yann_neuron_append_input_to_data_queue_new(_) ->
     DataQueue = array:set(1, queue:from_list([2, 3]), array:new(3, {default, queue:new()})),

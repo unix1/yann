@@ -1,4 +1,4 @@
--module(yann_map_sup).
+-module(yann_layout_sup).
 -behaviour(supervisor).
 
 -export([start_link/0]).
@@ -29,5 +29,5 @@ init([]) ->
 %% @end
 -spec children() -> [supervisor:child_spec()].
 children() ->
-    MapServer = ?CHILD(yann_map_server, yann_map_server, [], worker),
+    MapServer = ?CHILD(yann_layout_server, yann_layout_server, [], worker),
     [MapServer].

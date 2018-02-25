@@ -1,27 +1,35 @@
 %%%-------------------------------------------------------------------
-%% @doc `yann_map_server' module
+%% @doc `yann_layout_server' module
 %%
-%% Single process gen_server implementation of network map server.
+%% Single process gen_server implementation of network layout server.
 %% It acts as a proxy to handing out available spots in the network to newly
 %% spawned neurons; and provides network address to pid translation.
 %%
 %% To do this it
 %%
-%% - stores network map layout (layers and neurons per layer)
+%% - stores network layout (layers and neurons per layer)
 %% - stores neuron address (layer and index) mapping to its pid
-%% - monitors neuron pids and removes them from map when they crash
+%% - monitors neuron pids and removes them from mapping when they crash
 %% @end
 %%%-------------------------------------------------------------------
--module(yann_map_server).
+
+-module(yann_layout_server).
 
 -behaviour(gen_server).
 
+% API
+-export([set_layout/1]).
+
+% Supervision
 -export([start_link/0, init/1]).
+
+% Behavior callbacks
 -export([code_change/3, handle_call/3, handle_cast/2, handle_info/2, terminate/2]).
 
--type state() :: #{network_map => network_map(), neuron_map => neuron_map()}.
--type network_map() :: #{layers => [layer()]}.
--type layer() :: #{number_of_neurons => integer()}.
+-type state() :: #{layout => layout(), neuron_map => neuron_map()}.
+-type layout() :: #{layers => [layer()]}.
+-type layer() :: #{type => layer_type(), number_of_neurons => integer()}.
+-type layer_type() :: input | hidden | output.
 -type neuron_map() :: [layer_neuron_map()].
 -type layer_neuron_map() :: [pid()].
 
@@ -29,7 +37,9 @@
 -compile(export_all).
 -endif.
 
-%%%%% User functions %%%%%
+%%====================================================================
+%% Supervision
+%%====================================================================
 
 -spec start_link() -> {ok, pid()}.
 start_link() ->
@@ -41,6 +51,17 @@ start_link() ->
 init([]) ->
     State = #{network_map => #{layers => []}, neuron_map => []},
     {ok, State}.
+
+%%====================================================================
+%% API
+%%====================================================================
+-spec set_layout(Layout :: layout()) -> ok.
+set_layout(_Layout) ->
+    ok.
+
+%%====================================================================
+%% Behavior callbacks
+%%====================================================================
 
 -type from() :: {pid(), term()}.
 -spec handle_call(term(), from(), state()) -> {reply, ok, state()}.

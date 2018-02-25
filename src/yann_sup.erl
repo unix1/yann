@@ -30,5 +30,5 @@ init([]) ->
 -spec children() -> [supervisor:child_spec()].
 children() ->
     NeuronSup = ?CHILD(yann_neuron_sup, yann_neuron_sup, [], supervisor),
-    MapSup = ?CHILD(yann_map_sup, yann_map_sup, [], supervisor),
-    [NeuronSup, MapSup].
+    LayoutSup = ?CHILD(yann_layout_sup, yann_layout_sup, [], supervisor),
+    [NeuronSup, LayoutSup].
