@@ -29,5 +29,5 @@ init([]) ->
 %% @end
 -spec children() -> [supervisor:child_spec()].
 children() ->
-    MapServer = ?CHILD(yann_layout_server, yann_layout_server, [], worker),
-    [MapServer].
+    LayoutServer = ?CHILD(yann_layout_server, yann_layout_server, [], worker),
+    [LayoutServer].

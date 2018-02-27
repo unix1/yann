@@ -19,6 +19,7 @@
 -behaviour(gen_server).
 
 % API
+-export([get_layout/0]).
 -export([set_layout/1]).
 
 % Supervision
@@ -41,7 +42,7 @@
 
 -spec start_link() -> {ok, pid()}.
 start_link() ->
-    gen_server:start_link(?MODULE, [], []).
+    gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
 %%%%% Behavior functions %%%%%
 
@@ -54,8 +55,12 @@ init([]) ->
 %% API
 %%====================================================================
 -spec set_layout(Layout :: yann_layout:layout()) -> ok.
-set_layout(_Layout) ->
-    ok.
+set_layout(Layout) ->
+    ok = gen_server:call(?MODULE, {set_layout, Layout}).
+
+-spec get_layout() -> yann_layout:layout().
+get_layout() ->
+    gen_server:call(?MODULE, {get_layout}).
 
 %%====================================================================
 %% Behavior callbacks
@@ -63,8 +68,12 @@ set_layout(_Layout) ->
 
 -type from() :: {pid(), term()}.
 -spec handle_call(term(), from(), state()) -> {reply, ok, state()}.
-handle_call(_Msg, _From, State) ->
-    {reply, ok, State}.
+handle_call({get_layout}, _From, #{layout := Layout} = State) ->
+    {reply, Layout, State};
+handle_call({set_layout, Layout}, _From, State) ->
+    StateNew = State#{layout := Layout},
+    %% TODO update neuron servers
+    {reply, ok, StateNew}.
 
 -spec handle_cast(_, State) -> {noreply, State} when State::state().
 handle_cast(_Msg, State) -> {noreply, State}.
