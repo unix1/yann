@@ -1,14 +1,27 @@
+%%%-------------------------------------------------------------------
+%% @doc `yann_sup' module
+%%
+%% This is a top level `one_for_one' yann supervisor started by the yann
+%% application. It, in turn, starts the following supervisors under it:
+%% - {@link yann_neuron_sup}
+%% - {@link yann_layout_sup}
+%% @end
+%%%-------------------------------------------------------------------
+
 -module(yann_sup).
+
 -behaviour(supervisor).
 
--export([start_link/0]).
--export([init/1]).
+%% Supervision
+-export([start_link/0, init/1]).
 
 %% Helper macro for declaring children of supervisor
 -define(CHILD(Id, Module, Args, Type), {Id, {Module, start_link, Args},
         permanent, 5000, Type, [Module]}).
 
-%%%%% Behavior functions %%%%%
+%%====================================================================
+%% Supervision
+%%====================================================================
 
 -spec start_link() -> {ok, pid()}.
 start_link() ->

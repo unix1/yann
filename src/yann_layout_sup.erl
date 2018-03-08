@@ -1,14 +1,25 @@
+%%%-------------------------------------------------------------------
+%% @doc `yann_layout_sup' module
+%%
+%% This supervisor is started by {@link yann_sup} top level supervisor. It
+%% supervises {@link yann_layout_server}.
+%% @end
+%%%-------------------------------------------------------------------
+
 -module(yann_layout_sup).
+
 -behaviour(supervisor).
 
--export([start_link/0]).
--export([init/1]).
+% Supervision
+-export([start_link/0, init/1]).
 
 %% Helper macro for declaring children of supervisor
 -define(CHILD(Id, Module, Args, Type), {Id, {Module, start_link, Args},
         permanent, 5000, Type, [Module]}).
 
-%%%%% Behavior functions %%%%%
+%%====================================================================
+%% Supervision
+%%====================================================================
 
 -spec start_link() -> {ok, pid()}.
 start_link() ->

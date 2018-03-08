@@ -44,8 +44,6 @@
 start_link() ->
     gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
-%%%%% Behavior functions %%%%%
-
 -spec init([]) -> {ok, state()}.
 init([]) ->
     State = #{layout => yann_layout:new([]), neuron_map => []},
@@ -67,12 +65,12 @@ get_layout() ->
 %%====================================================================
 
 -type from() :: {pid(), term()}.
--spec handle_call(term(), from(), state()) -> {reply, ok, state()}.
+-spec handle_call(term(), from(), state()) -> {reply, term(), state()}.
 handle_call({get_layout}, _From, #{layout := Layout} = State) ->
     {reply, Layout, State};
 handle_call({set_layout, Layout}, _From, State) ->
     StateNew = State#{layout := Layout},
-    %% TODO update neuron servers
+    %% TODO update (add or remove) neuron servers in updated layers
     {reply, ok, StateNew}.
 
 -spec handle_cast(_, State) -> {noreply, State} when State::state().

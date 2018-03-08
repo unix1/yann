@@ -1,10 +1,11 @@
 -module(yann_neuron_sup).
 -behaviour(supervisor).
 
--export([start_link/0]).
--export([init/1]).
+-export([start_link/0, init/1]).
 
-%%%%% Behavior functions %%%%%
+%%====================================================================
+%% Supervision
+%%====================================================================
 
 -spec start_link() -> {ok, pid()}.
 start_link() ->
