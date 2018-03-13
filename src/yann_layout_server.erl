@@ -28,9 +28,15 @@
 % Behavior callbacks
 -export([code_change/3, handle_call/3, handle_cast/2, handle_info/2, terminate/2]).
 
--type state() :: #{layout => yann_layout:layout(), neuron_map => neuron_map()}.
+-type state() :: #{
+    status => status(),
+    layout => yann_layout:layout(),
+    neuron_map => neuron_map()
+}.
+-type status() :: init | running.
 -type neuron_map() :: [layer_neuron_map()].
 -type layer_neuron_map() :: [pid()].
+-type spot() :: {pos_integer(), pos_integer()}.
 
 -ifdef(TEST).
 -compile(export_all).
@@ -46,12 +52,13 @@ start_link() ->
 
 -spec init([]) -> {ok, state()}.
 init([]) ->
-    State = #{layout => yann_layout:new([]), neuron_map => []},
+    State = #{status => init, layout => yann_layout:new([]), neuron_map => []},
     {ok, State}.
 
 %%====================================================================
 %% API
 %%====================================================================
+
 -spec set_layout(Layout :: yann_layout:layout()) -> ok.
 set_layout(Layout) ->
     ok = gen_server:call(?MODULE, {set_layout, Layout}).
@@ -68,10 +75,15 @@ get_layout() ->
 -spec handle_call(term(), from(), state()) -> {reply, term(), state()}.
 handle_call({get_layout}, _From, #{layout := Layout} = State) ->
     {reply, Layout, State};
-handle_call({set_layout, Layout}, _From, State) ->
-    StateNew = State#{layout := Layout},
-    %% TODO update (add or remove) neuron servers in updated layers
-    {reply, ok, StateNew}.
+handle_call({set_layout, Layout}, _From, #{status := init} = State) ->
+    NeuronMap = get_new_neuron_map_from_layout(Layout),
+    StateNew = State#{status := running, layout := Layout, neuron_map := NeuronMap},
+    %% TODO trigger supervisor to start neuron workers
+    {reply, ok, StateNew};
+handle_call({assign_spot}, _From, #{layout := Layout, neuron_map := NeuronMap} = State) ->
+    {Spot, NewNeuronMap} = find_next_available_spot(Layout, NeuronMap),
+    NewState = State#{neuron_map := NewNeuronMap},
+    {reply, Spot, NewState}.
 
 -spec handle_cast(_, State) -> {noreply, State} when State::state().
 handle_cast(_Msg, State) -> {noreply, State}.
@@ -85,4 +97,20 @@ terminate(_Reason, _State) -> ok.
 -spec code_change(_, State, _) -> {ok, State} when State::state().
 code_change(_OldVersion, State, _Extra) -> {ok, State}.
 
-%%%%% Library functions %%%%%
+%%====================================================================
+%% Internal functions
+%%====================================================================
+
+-spec get_new_neuron_map_from_layout(yann_layout:layout()) -> neuron_map().
+get_new_neuron_map_from_layout(Layout) ->
+    NumberOfNeurons = yann_layout:get_number_of_neurons(Layout),
+    Fun = fun(NeuronsInLayer, Acc) ->
+        [lists:duplicate(NeuronsInLayer, none) | Acc]
+    end,
+    lists:foldr(Fun, [], NumberOfNeurons).
+
+-spec find_next_available_spot(yann_layout:layout(), neuron_map()) ->
+    {spot() | none, neuron_map()}.
+find_next_available_spot(_Layout, NeuronMap) ->
+    %% TODO Find the next spot and return coordinates and updated neuron map
+    {none, NeuronMap}.

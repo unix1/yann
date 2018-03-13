@@ -11,7 +11,10 @@
 
 %% Tests
 -export([
+    yann_layout_get_number_of_layers/1,
+    yann_layout_get_number_of_neurons/1,
     yann_layout_new/1,
+    yann_layout_server_get_new_neuron_map_from_layout/1,
     yann_layout_server_set_layout/1
 ]).
 -export([
@@ -35,7 +38,10 @@
 
 all() ->
     [
+        yann_layout_get_number_of_layers,
+        yann_layout_get_number_of_neurons,
         yann_layout_new,
+        yann_layout_server_get_new_neuron_map_from_layout,
         yann_layout_server_set_layout,
         yann_neuron_append_input_to_data_queue_new,
         yann_neuron_append_input_to_data_queue_existing,
@@ -66,26 +72,47 @@ end_per_testcase(_, _Config) ->
     ok.
 
 %%====================================================================
+%% Helpers
+%%====================================================================
+
+get_layout() ->
+    InputLayer = #{type => 'input', number_of_neurons => 3},
+    HiddenLayer = #{type => 'hidden', number_of_neurons => 10},
+    OutputLayer = #{type => 'output', number_of_neurons => 5},
+    Layers = [
+        InputLayer,
+        HiddenLayer,
+        OutputLayer
+    ],
+    yann_layout:new(Layers).
+
+%%====================================================================
 %% Tests
 %%====================================================================
 
+yann_layout_get_number_of_layers(_) ->
+    Layout = get_layout(),
+    3 = yann_layout:get_number_of_layers(Layout).
+
+yann_layout_get_number_of_neurons(_) ->
+    Layout = get_layout(),
+    [3, 10, 5] = yann_layout:get_number_of_neurons(Layout).
+
 yann_layout_new(_) ->
-    Layers = [
-        #{type => 'input', number_of_neurons => 3},
-        #{type => 'hidden', number_of_neurons => 10},
-        #{type => 'output', number_of_neurons => 5}
-    ],
-    Layout = yann_layout:new(Layers),
-    Length = length(Layers),
-    Length = yann_layout:get_number_of_layers(Layout).
+    Layout = get_layout(),
+    3 = yann_layout:get_number_of_layers(Layout),
+    10 = yann_layout:get_number_of_neurons(Layout, 2).
+
+yann_layout_server_get_new_neuron_map_from_layout(_) ->
+    Layout = get_layout(),
+    [
+        [none, none, none],
+        [none, none, none, none, none, none, none, none, none, none],
+        [none, none, none, none, none]
+    ] = yann_layout_server:get_new_neuron_map_from_layout(Layout).
 
 yann_layout_server_set_layout(_) ->
-    Layers = [
-        #{type => 'input', number_of_neurons => 3},
-        #{type => 'hidden', number_of_neurons => 10},
-        #{type => 'output', number_of_neurons => 5}
-    ],
-    Layout = yann_layout:new(Layers),
+    Layout = get_layout(),
     ok = yann_layout_server:set_layout(Layout),
     Layout = yann_layout_server:get_layout().
 

@@ -13,6 +13,8 @@
 %% API
 -export([new/1]).
 -export([get_number_of_layers/1]).
+-export([get_number_of_neurons/1]).
+-export([get_number_of_neurons/2]).
 
 %% Types
 -export_type([layout/0]).
@@ -47,3 +49,26 @@ new(Layers) when is_list(Layers) ->
 -spec get_number_of_layers(Layout :: layout()) -> pos_integer().
 get_number_of_layers(Layout) ->
     length(Layout).
+
+%% @doc Get numbers of neurons in each layer
+%%
+%% Get a list containing number of neurons for each layer in
+%% {@link yann_layout:layout()}.
+%% @end
+-spec get_number_of_neurons(Layout :: layout()) -> [pos_integer()].
+get_number_of_neurons(Layout) ->
+    Fun = fun(#{number_of_neurons := NumberOfNeurons}, Acc) ->
+        [NumberOfNeurons|Acc]
+    end,
+    lists:foldr(Fun, [], Layout).
+
+%% @doc Get number of neurons in a given layer
+%%
+%% Get number of neurons in a specific layer in {@link yann_layout:layout()}
+%% data type.
+%% @end
+-spec get_number_of_neurons(Layout :: layout(), LayerNumber :: pos_integer()) ->
+    pos_integer().
+get_number_of_neurons(Layout, LayerNumber) ->
+    #{number_of_neurons := NumberOfNeurons} = lists:nth(LayerNumber, Layout),
+    NumberOfNeurons.
