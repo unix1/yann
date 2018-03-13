@@ -86,6 +86,14 @@ get_layout() ->
     ],
     yann_layout:new(Layers).
 
+get_neuron_map() ->
+    [
+        [none, none, none],
+        [none, none, none, none, none, none, none, none, none, none],
+        [none, none, none, none, none]
+    ].
+
+
 %%====================================================================
 %% Tests
 %%====================================================================
@@ -105,16 +113,14 @@ yann_layout_new(_) ->
 
 yann_layout_server_get_new_neuron_map_from_layout(_) ->
     Layout = get_layout(),
-    [
-        [none, none, none],
-        [none, none, none, none, none, none, none, none, none, none],
-        [none, none, none, none, none]
-    ] = yann_layout_server:get_new_neuron_map_from_layout(Layout).
+    NeuronMap = get_neuron_map(),
+    NeuronMap = yann_layout_server:get_new_neuron_map_from_layout(Layout).
 
 yann_layout_server_set_layout(_) ->
     Layout = get_layout(),
     ok = yann_layout_server:set_layout(Layout),
-    Layout = yann_layout_server:get_layout().
+    Layout = yann_layout_server:get_layout(),
+    NeuronMap = yann_layout_server:get_neuron_map().
 
 yann_neuron_append_input_to_data_queue_new(_) ->
     DataQueue = array:set(1, queue:from_list([2, 3]), array:new(3, {default, queue:new()})),

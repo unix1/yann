@@ -20,6 +20,7 @@
 
 % API
 -export([get_layout/0]).
+-export([get_neuron_map/0]).
 -export([set_layout/1]).
 
 % Supervision
@@ -67,6 +68,10 @@ set_layout(Layout) ->
 get_layout() ->
     gen_server:call(?MODULE, {get_layout}).
 
+-spec get_neuron_map() -> neuron_map().
+get_neuron_map() ->
+    gen_server:call(?MODULE, {get_neuron_map}).
+
 %%====================================================================
 %% Behavior callbacks
 %%====================================================================
@@ -75,6 +80,8 @@ get_layout() ->
 -spec handle_call(term(), from(), state()) -> {reply, term(), state()}.
 handle_call({get_layout}, _From, #{layout := Layout} = State) ->
     {reply, Layout, State};
+handle_call({get_neuron_map}, _From, #{neuron_map := NeuronMap} = State) ->
+    {reply, NeuronMap, State};
 handle_call({set_layout, Layout}, _From, #{status := init} = State) ->
     NeuronMap = get_new_neuron_map_from_layout(Layout),
     StateNew = State#{status := running, layout := Layout, neuron_map := NeuronMap},
