@@ -8,9 +8,9 @@
 %% To do this it
 %%
 %% - stores network layout (layers and neurons per layer)
-%% - stores neuron address (layer and index) mapping to its pid
-%% - monitors neuron pids and removes them from mapping when they crash
-%% - adds new neuron pids to the mapping when assigning them network addresses
+%% - stores neuron address (layer and index) mapping to its pid in neuron map
+%% - monitors neuron pids and removes them from the neuron map when they crash
+%% - adds new neuron pids to the neuron map when assigning them to the network
 %% @end
 %%%-------------------------------------------------------------------
 
@@ -60,14 +60,23 @@ init([]) ->
 %% API
 %%====================================================================
 
+%% @doc Set initial layout of the network
+%%
+%% @end
 -spec set_layout(Layout :: yann_layout:layout()) -> ok.
 set_layout(Layout) ->
     ok = gen_server:call(?MODULE, {set_layout, Layout}).
 
+%% @doc Get network layout
+%%
+%% @end
 -spec get_layout() -> yann_layout:layout().
 get_layout() ->
     gen_server:call(?MODULE, {get_layout}).
 
+%% @doc Get current neuron map
+%%
+%% @end
 -spec get_neuron_map() -> neuron_map().
 get_neuron_map() ->
     gen_server:call(?MODULE, {get_neuron_map}).
