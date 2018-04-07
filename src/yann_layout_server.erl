@@ -83,13 +83,14 @@ handle_call({get_layout}, _From, #{layout := Layout} = State) ->
 handle_call({get_neuron_map}, _From, #{neuron_map := NeuronMap} = State) ->
     {reply, NeuronMap, State};
 handle_call({set_layout, Layout}, _From, #{status := init} = State) ->
-    NeuronMap = get_new_neuron_map_from_layout(Layout),
+    NeuronMap = create_neuron_map_from_layout(Layout),
     StateNew = State#{status := running, layout := Layout, neuron_map := NeuronMap},
     %% TODO trigger supervisor to start neuron workers
     {reply, ok, StateNew};
-handle_call({assign_spot}, _From, #{layout := Layout, neuron_map := NeuronMap} = State) ->
-    {Spot, NewNeuronMap} = find_next_available_spot(Layout, NeuronMap),
+handle_call({assign_spot}, {Pid, _}, #{status := running, neuron_map := NeuronMap} = State) ->
+    {Spot, NewNeuronMap} = assign_next_available_spot(NeuronMap, Pid),
     NewState = State#{neuron_map := NewNeuronMap},
+    %% NOTE `Spot' may be equal to not_found
     {reply, Spot, NewState}.
 
 -spec handle_cast(_, State) -> {noreply, State} when State::state().
@@ -108,16 +109,59 @@ code_change(_OldVersion, State, _Extra) -> {ok, State}.
 %% Internal functions
 %%====================================================================
 
--spec get_new_neuron_map_from_layout(yann_layout:layout()) -> neuron_map().
-get_new_neuron_map_from_layout(Layout) ->
+%% @doc Create a new neuron map from a given layout
+%% @private
+%%
+%% @end
+-spec create_neuron_map_from_layout(yann_layout:layout()) -> neuron_map().
+create_neuron_map_from_layout(Layout) ->
     NumberOfNeurons = yann_layout:get_number_of_neurons(Layout),
     Fun = fun(NeuronsInLayer, Acc) ->
         [lists:duplicate(NeuronsInLayer, none) | Acc]
     end,
     lists:foldr(Fun, [], NumberOfNeurons).
 
--spec find_next_available_spot(yann_layout:layout(), neuron_map()) ->
-    {spot() | none, neuron_map()}.
-find_next_available_spot(_Layout, NeuronMap) ->
-    %% TODO Find the next spot and return coordinates and updated neuron map
-    {none, NeuronMap}.
+%% @doc Place the pid in the neuron map
+%% @private
+%%
+%% Finds the next available spot in the neuron map, places the pid in that spot
+%% and returns it along with the new neuron map.
+%% @end
+-spec assign_next_available_spot(neuron_map(), pid()) ->
+    {spot() | not_found, neuron_map()}.
+assign_next_available_spot(NeuronMap, Pid) when is_pid(Pid) ->
+    case find_next_available_spot(NeuronMap) of
+        not_found ->
+            {not_found, NeuronMap};
+        {LayerIndex, NeuronIndex} ->
+            %% TODO monitor the Pid
+            NewNeuronMap = assign_spot_to_pid(LayerIndex, NeuronIndex, NeuronMap, Pid),
+            {{LayerIndex, NeuronIndex}, NewNeuronMap}
+    end.
+
+%% @doc Find next available spot in the neuron map
+%% @private
+%%
+%% @end
+-spec find_next_available_spot(neuron_map()) -> spot()|not_found.
+find_next_available_spot(NeuronMap) ->
+    % List of first available position in each layer
+    LayersUnassignedIndexes = [yann_util:list_pos(none, Layer, 1) || Layer <- NeuronMap],
+    yann_util:list_non_pos(not_found, LayersUnassignedIndexes, 1).
+
+%% @doc Assigns a given Pid to the given layer and index
+%% @private
+%%
+%% Returns a new neuron map with assignment in place.
+%% @end
+-spec assign_spot_to_pid(
+    LayerIndex :: non_neg_integer(),
+    NeuronIndex :: non_neg_integer(),
+    NeuronMap :: neuron_map(),
+    Pid :: pid()
+) -> neuron_map().
+assign_spot_to_pid(LayerIndex, NeuronIndex, NeuronMap, Pid) ->
+    Layer = lists:nth(LayerIndex, NeuronMap),
+    NewLayer = yann_util:list_setnth(NeuronIndex, Layer, Pid),
+    NewNeuronMap = yann_util:list_setnth(LayerIndex, NeuronMap, NewLayer),
+    NewNeuronMap.
