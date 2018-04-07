@@ -1,10 +1,20 @@
+%%%-------------------------------------------------------------------
+%% @doc `yann_app' module
+%%
+%% This starts the yann application.
+%% @end
+%%%-------------------------------------------------------------------
+
 -module(yann_app).
+
 -behaviour(application).
 
--export([start/2]).
--export([stop/1]).
+%% Supervision
+-export([start/2, stop/1]).
 
-%%%%% Behavior functions %%%%%
+%%====================================================================
+%% Supervision
+%%====================================================================
 
 -spec start(_, _) -> {ok, pid()}.
 start(_Type, _Args) ->

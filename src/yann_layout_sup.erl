@@ -1,18 +1,16 @@
 %%%-------------------------------------------------------------------
-%% @doc `yann_sup' module
+%% @doc `yann_layout_sup' module
 %%
-%% This is a top level `one_for_one' yann supervisor started by the yann
-%% application. It, in turn, starts the following supervisors under it:
-%% - {@link yann_neuron_sup}
-%% - {@link yann_layout_sup}
+%% This supervisor is started by {@link yann_sup} top level supervisor. It
+%% supervises {@link yann_layout_server}.
 %% @end
 %%%-------------------------------------------------------------------
 
--module(yann_sup).
+-module(yann_layout_sup).
 
 -behaviour(supervisor).
 
-%% Supervision
+% Supervision
 -export([start_link/0, init/1]).
 
 %% Helper macro for declaring children of supervisor
@@ -42,6 +40,5 @@ init([]) ->
 %% @end
 -spec children() -> [supervisor:child_spec()].
 children() ->
-    NeuronSup = ?CHILD(yann_neuron_sup, yann_neuron_sup, [], supervisor),
-    LayoutSup = ?CHILD(yann_layout_sup, yann_layout_sup, [], supervisor),
-    [NeuronSup, LayoutSup].
+    LayoutServer = ?CHILD(yann_layout_server, yann_layout_server, [], worker),
+    [LayoutServer].

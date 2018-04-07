@@ -1,4 +1,4 @@
--module(yann_server).
+-module(yann_neuron).
 
 -behaviour(gen_server).
 
@@ -37,7 +37,9 @@ error(Pid) ->
 
 -spec init({_}) -> {ok, state()}.
 init({_Options}) ->
-    % TODO (1) neuron connections
+    % TODO (1) initialization of layers and supervisors
+    % TODO (2) initialization of neurons and their connections
+    % TODO (2) make map server a behavior
     % TODO (3) add options:
     %       - layer (input, hidden, output)
     %       - connected neuron Pids from previous layer
