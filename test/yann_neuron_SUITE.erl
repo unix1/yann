@@ -1,4 +1,4 @@
--module(yann_SUITE).
+-module(yann_neuron_SUITE).
 
 -include_lib("common_test/include/ct.hrl").
 
@@ -119,9 +119,7 @@ yann_neuron_initialize_weights(_) ->
     Actual = yann_neuron:initialize_weights(1000),
     1000 = length(Actual),
     lists:foldl(
-        fun(Value, ok) ->
-            Value >= 0,
-            Value =< 1,
+        fun(Value, ok) when Value >= 0, Value =< 1 ->
             ok
         end,
         ok,

@@ -179,4 +179,6 @@ yann_layout_server_set_layout(_) ->
     Layout = get_layout(),
     ok = yann_layout_server:set_layout(Layout),
     Layout = yann_layout_server:get_layout(),
-    NeuronMap = yann_layout_server:get_neuron_map().
+    NeuronMap = yann_layout_server:get_neuron_map(),
+    ExpectedMap = get_empty_neuron_map(),
+    ExpectedMap = NeuronMap.
