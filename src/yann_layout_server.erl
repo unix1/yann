@@ -19,8 +19,10 @@
 -behaviour(gen_server).
 
 % API
+-export([assign_spot/0]).
 -export([get_layout/0]).
 -export([get_neuron_map/0]).
+-export([get_process_map/0]).
 -export([set_layout/1]).
 
 % Supervision
@@ -32,12 +34,19 @@
 -type state() :: #{
     status => status(),
     layout => yann_layout:layout(),
-    neuron_map => neuron_map()
+    neuron_map => neuron_map(),
+    process_map => process_map()
 }.
 -type status() :: init | running.
 -type neuron_map() :: [layer_neuron_map()].
 -type layer_neuron_map() :: [pid()].
+
 -type spot() :: {pos_integer(), pos_integer()}.
+%% Address - layer and neuron index - of a neuron pid in a network
+
+-type process_map() :: #{pid() => spot()}.
+%% Map used to store pid to network spot translation; useful for quick lookups
+%% when DOWN message is received during monitoring of neurons.
 
 -ifdef(TEST).
 -compile(export_all).
@@ -53,19 +62,24 @@ start_link() ->
 
 -spec init([]) -> {ok, state()}.
 init([]) ->
-    State = #{status => init, layout => yann_layout:new([]), neuron_map => []},
+    State = #{
+        status => init,
+        layout => yann_layout:new([]),
+        neuron_map => [],
+        process_map => #{}
+    },
     {ok, State}.
 
 %%====================================================================
 %% API
 %%====================================================================
 
-%% @doc Set initial layout of the network
+%% @doc Assign a spot to the calling process
 %%
 %% @end
--spec set_layout(Layout :: yann_layout:layout()) -> ok.
-set_layout(Layout) ->
-    ok = gen_server:call(?MODULE, {set_layout, Layout}).
+-spec assign_spot() -> spot()|not_found.
+assign_spot() ->
+    gen_server:call(?MODULE, {assign_spot}).
 
 %% @doc Get network layout
 %%
@@ -81,6 +95,20 @@ get_layout() ->
 get_neuron_map() ->
     gen_server:call(?MODULE, {get_neuron_map}).
 
+%% @doc Get current process map
+%%
+%% @end
+-spec get_process_map() -> process_map().
+get_process_map() ->
+    gen_server:call(?MODULE, {get_process_map}).
+
+%% @doc Set initial layout of the network
+%%
+%% @end
+-spec set_layout(Layout :: yann_layout:layout()) -> ok.
+set_layout(Layout) ->
+    ok = gen_server:call(?MODULE, {set_layout, Layout}).
+
 %%====================================================================
 %% Behavior callbacks
 %%====================================================================
@@ -91,14 +119,21 @@ handle_call({get_layout}, _From, #{layout := Layout} = State) ->
     {reply, Layout, State};
 handle_call({get_neuron_map}, _From, #{neuron_map := NeuronMap} = State) ->
     {reply, NeuronMap, State};
+handle_call({get_process_map}, _From, #{process_map := ProcessMap} = State) ->
+    {reply, ProcessMap, State};
 handle_call({set_layout, Layout}, _From, #{status := init} = State) ->
     NeuronMap = create_neuron_map_from_layout(Layout),
     StateNew = State#{status := running, layout := Layout, neuron_map := NeuronMap},
     %% TODO trigger supervisor to start neuron workers
     {reply, ok, StateNew};
-handle_call({assign_spot}, {Pid, _}, #{status := running, neuron_map := NeuronMap} = State) ->
+handle_call(
+    {assign_spot},
+    {Pid, _},
+    #{status := running, neuron_map := NeuronMap, process_map := ProcessMap} = State
+) ->
     {Spot, NewNeuronMap} = assign_next_available_spot(NeuronMap, Pid),
-    NewState = State#{neuron_map := NewNeuronMap},
+    NewProcessMap = add_pid_to_process_map(Pid, Spot, ProcessMap),
+    NewState = State#{neuron_map := NewNeuronMap, process_map := NewProcessMap},
     %% NOTE `Spot' may be equal to not_found
     {reply, Spot, NewState}.
 
@@ -106,6 +141,15 @@ handle_call({assign_spot}, {Pid, _}, #{status := running, neuron_map := NeuronMa
 handle_cast(_Msg, State) -> {noreply, State}.
 
 -spec handle_info(_, State) -> {noreply, State} when State::state().
+handle_info(
+    {'DOWN', _MonitorRef, process, Pid, _Reason},
+    #{status := running, neuron_map := NeuronMap, process_map := ProcessMap} = State
+) ->
+    {LayerIndex, NeuronIndex} = maps:get(Pid, ProcessMap),
+    NewNeuronMap = assign_spot_to_pid(LayerIndex, NeuronIndex, NeuronMap, none),
+    NewProcessMap = maps:remove(Pid, ProcessMap),
+    NewState = State#{neuron_map := NewNeuronMap, process_map := NewProcessMap},
+    {noreply, NewState};
 handle_info(_Msg, State) -> {noreply, State}.
 
 -spec terminate(_, _) -> ok.
@@ -143,8 +187,8 @@ assign_next_available_spot(NeuronMap, Pid) when is_pid(Pid) ->
         not_found ->
             {not_found, NeuronMap};
         {LayerIndex, NeuronIndex} ->
-            %% TODO monitor the Pid
             NewNeuronMap = assign_spot_to_pid(LayerIndex, NeuronIndex, NeuronMap, Pid),
+            _Ref = erlang:monitor(process, Pid),
             {{LayerIndex, NeuronIndex}, NewNeuronMap}
     end.
 
@@ -158,7 +202,7 @@ find_next_available_spot(NeuronMap) ->
     LayersUnassignedIndexes = [yann_util:list_pos(none, Layer, 1) || Layer <- NeuronMap],
     yann_util:list_non_pos(not_found, LayersUnassignedIndexes, 1).
 
-%% @doc Assigns a given Pid to the given layer and index
+%% @doc Assign a given Pid to the given layer and index
 %% @private
 %%
 %% Returns a new neuron map with assignment in place.
@@ -167,10 +211,20 @@ find_next_available_spot(NeuronMap) ->
     LayerIndex :: non_neg_integer(),
     NeuronIndex :: non_neg_integer(),
     NeuronMap :: neuron_map(),
-    Pid :: pid()
+    Pid :: pid()|none
 ) -> neuron_map().
 assign_spot_to_pid(LayerIndex, NeuronIndex, NeuronMap, Pid) ->
     Layer = lists:nth(LayerIndex, NeuronMap),
     NewLayer = yann_util:list_setnth(NeuronIndex, Layer, Pid),
     NewNeuronMap = yann_util:list_setnth(LayerIndex, NeuronMap, NewLayer),
     NewNeuronMap.
+
+%% @doc Add process to spot mapping to process map
+%% @private
+%%
+%% @end
+-spec add_pid_to_process_map(pid(), spot()|not_found, process_map()) -> process_map().
+add_pid_to_process_map(_Pid, not_found, ProcessMap) ->
+    ProcessMap;
+add_pid_to_process_map(Pid, Spot, ProcessMap) ->
+    ProcessMap#{Pid => Spot}.
