@@ -1,13 +1,28 @@
+%%%-------------------------------------------------------------------
+%% @doc `yann_neuron' module
+%%
+%% Implementation of a single neuron as a process.
+%% @end
+%%%-------------------------------------------------------------------
+
 -module(yann_neuron).
 
 -behaviour(gen_server).
 
--export([start_link/1, init/1]).
--export([code_change/3, handle_call/3, handle_cast/2, handle_info/2, terminate/2]).
-
+% API
 -export([input/2, error/1]).
 
--type state() :: #{weights => weights(), data => data(), data_queue => data_queue()}.
+% Supervision
+-export([start_link/1, init/1]).
+
+% Behavior callbacks
+-export([code_change/3, handle_call/3, handle_cast/2, handle_info/2, terminate/2]).
+
+-type state() :: #{
+    weights => weights(),
+    data => data(),
+    data_queue => data_queue()
+}.
 -type weights() :: [float()].
 -type data() :: array:array(). % array of floats
 -type data_queue() :: array:array(). % array of queues
@@ -17,29 +32,16 @@
 -compile(export_all).
 -endif.
 
-%%%%% User functions %%%%%
+%%====================================================================
+%% Supervision
+%%====================================================================
 
 -spec start_link(_) -> {ok, pid()}.
 start_link(Options) ->
     gen_server:start_link(?MODULE, {Options}, []).
 
--spec input(pid(), input()) -> ok.
-input(Pid, {I, X}) when is_pid(Pid), is_integer(I), I > 0, is_float(X) ->
-    ok = gen_server:call(Pid, {input, {I, X}}).
-
--spec error(Pid :: pid()) -> ok.
-error(Pid) ->
-    % TODO (5) specify input for error
-    % TODO (5) call gen_server to compute error and notify previous layer neurons
-    ok = gen_server:call(Pid, {error}).
-
-%%%%% Behavior functions %%%%%
-
 -spec init({_}) -> {ok, state()}.
 init({_Options}) ->
-    % TODO (1) initialization of layers and supervisors
-    % TODO (2) initialization of neurons and their connections
-    % TODO (2) make map server a behavior
     % TODO (3) add options:
     %       - layer (input, hidden, output)
     %       - connected neuron Pids from previous layer
@@ -54,6 +56,24 @@ init({_Options}) ->
     Weights = initialize_weights(NumberOfInputs + 1),
     State = #{weights => Weights, data => Data, data_queue => DataQueue},
     {ok, State}.
+
+%%====================================================================
+%% API
+%%====================================================================
+
+-spec input(pid(), input()) -> ok.
+input(Pid, {I, X}) when is_pid(Pid), is_integer(I), I > 0, is_float(X) ->
+    ok = gen_server:call(Pid, {input, {I, X}}).
+
+-spec error(Pid :: pid()) -> ok.
+error(Pid) ->
+    % TODO (5) specify input for error
+    % TODO (5) call gen_server to compute error and notify previous layer neurons
+    ok = gen_server:call(Pid, {error}).
+
+%%====================================================================
+%% Behavior callbacks
+%%====================================================================
 
 -type from() :: {pid(), term()}.
 -spec handle_call({input, input()}, from(), state()) -> {reply, ok, state()}.
@@ -87,7 +107,9 @@ terminate(_Reason, _State) -> ok.
 -spec code_change(_, State, _) -> {ok, State} when State::state().
 code_change(_OldVersion, State, _Extra) -> {ok, State}.
 
-%%%%% Library functions %%%%%
+%%====================================================================
+%% Internal functions
+%%====================================================================
 
 -spec initialize_data(pos_integer()) -> data().
 initialize_data(N) when is_integer(N), N > 0 ->

@@ -9,7 +9,7 @@
 -export([init_per_testcase/2]).
 -export([end_per_testcase/2]).
 
-%% Tests
+%% Unit Tests
 -export([
     yann_neuron_append_input_to_data_queue_new/1,
     yann_neuron_append_input_to_data_queue_existing/1,
@@ -21,8 +21,12 @@
     yann_neuron_input_to_data_or_queue_empty/1,
     yann_neuron_input_to_data_or_queue_taken/1,
     yann_neuron_sigmoid/1,
-    yann_neuron_start/1,
     yann_neuron_weighted_sum/1
+]).
+
+%% Functional Tests
+-export([
+    yann_neuron_start/1
 ]).
 
 %%====================================================================
@@ -31,6 +35,7 @@
 
 all() ->
     [
+        % Unit
         yann_neuron_append_input_to_data_queue_new,
         yann_neuron_append_input_to_data_queue_existing,
         yann_neuron_initialize_data,
@@ -41,8 +46,9 @@ all() ->
         yann_neuron_input_to_data_or_queue_empty,
         yann_neuron_input_to_data_or_queue_taken,
         yann_neuron_sigmoid,
-        yann_neuron_start,
-        yann_neuron_weighted_sum
+        yann_neuron_weighted_sum,
+        % Functional
+        yann_neuron_start
     ].
 
 init_per_suite(Config) ->
@@ -64,7 +70,7 @@ end_per_testcase(_, _Config) ->
 %%====================================================================
 
 %%====================================================================
-%% Tests
+%% Unit Tests
 %%====================================================================
 
 yann_neuron_append_input_to_data_queue_new(_) ->
@@ -148,12 +154,16 @@ yann_neuron_sigmoid(_) ->
     1.0 = yann_neuron:sigmoid(99.9),
     0.5 = yann_neuron:sigmoid(0.0).
 
-yann_neuron_start(_) ->
-    {ok, _Pid} = supervisor:start_child(yann_neuron_sup, []).
-
 yann_neuron_weighted_sum(_) ->
     2.0 = yann_neuron:weighted_sum([1.2, 2.0, 4.0, -1.0], [5.0, 3.0, -2.0, 2.0]),
     0.0 = yann_neuron:weighted_sum([], []).
+
+%%====================================================================
+%% Functional Tests
+%%====================================================================
+
+yann_neuron_start(_) ->
+    {ok, _Pid} = supervisor:start_child(yann_neuron_sup, []).
 
 %%====================================================================
 %% Private

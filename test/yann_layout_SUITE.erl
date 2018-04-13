@@ -9,16 +9,20 @@
 -export([init_per_testcase/2]).
 -export([end_per_testcase/2]).
 
-%% Tests
+%% Unit Tests
 -export([
     yann_layout_get_number_of_layers/1,
     yann_layout_get_number_of_neurons/1,
     yann_layout_new/1,
     yann_layout_server_assign_next_available_spot/1,
-    yann_layout_server_assign_spot/1,
     yann_layout_server_assign_spot_to_pid/1,
     yann_layout_server_create_neuron_map_from_layout/1,
-    yann_layout_server_find_next_available_spot/1,
+    yann_layout_server_find_next_available_spot/1
+]).
+
+%% Functional Tests
+-export([
+    yann_layout_server_assign_spot/1,
     yann_layout_server_init/1,
     yann_layout_server_set_layout/1
 ]).
@@ -29,14 +33,16 @@
 
 all() ->
     [
+        % Unit
         yann_layout_get_number_of_layers,
         yann_layout_get_number_of_neurons,
         yann_layout_new,
         yann_layout_server_assign_next_available_spot,
-        yann_layout_server_assign_spot,
         yann_layout_server_assign_spot_to_pid,
         yann_layout_server_create_neuron_map_from_layout,
         yann_layout_server_find_next_available_spot,
+        % Functional
+        yann_layout_server_assign_spot,
         yann_layout_server_init,
         yann_layout_server_set_layout
     ].
@@ -118,7 +124,7 @@ get_neuron_fun() ->
     end.
 
 %%====================================================================
-%% Tests
+%% Unit Tests
 %%====================================================================
 
 yann_layout_get_number_of_layers(_) ->
@@ -167,6 +173,43 @@ yann_layout_server_assign_next_available_spot(_) ->
     ExpectedNeuronMap3 = NewNeuronMap3,
     ExpectedSpot3 = Spot3.
 
+yann_layout_server_assign_spot_to_pid(_) ->
+    NeuronMap = get_empty_neuron_map(),
+    Pid = list_to_pid("<0.123.0>"),
+    % Test assigning layer 1 position 3
+    NewNeuronMap1 = yann_layout_server:assign_spot_to_pid(1, 3, NeuronMap, Pid),
+    ExpectedNeuronMap1 = [
+        [none, none, Pid],
+        [none, none, none, none, none, none, none, none, none, none],
+        [none, none, none, none, none]
+    ],
+    ExpectedNeuronMap1 = NewNeuronMap1,
+    % Test assigning layer 3 position 1
+    NewNeuronMap2 = yann_layout_server:assign_spot_to_pid(3, 1, NeuronMap, Pid),
+    ExpectedNeuronMap2 = [
+        [none, none, none],
+        [none, none, none, none, none, none, none, none, none, none],
+        [Pid, none, none, none, none]
+    ],
+    ExpectedNeuronMap2 = NewNeuronMap2.
+
+yann_layout_server_create_neuron_map_from_layout(_) ->
+    Layout = get_layout(),
+    NeuronMap = get_empty_neuron_map(),
+    NeuronMap = yann_layout_server:create_neuron_map_from_layout(Layout).
+
+yann_layout_server_find_next_available_spot(_) ->
+    NeuronMap1 = get_empty_neuron_map(),
+    {1, 1} = yann_layout_server:find_next_available_spot(NeuronMap1),
+    NeuronMap2 = get_full_neuron_map(),
+    not_found = yann_layout_server:find_next_available_spot(NeuronMap2),
+    NeuronMap3 = get_mixed_neuron_map(),
+    {2, 3} = yann_layout_server:find_next_available_spot(NeuronMap3).
+
+%%====================================================================
+%% Functional Tests
+%%====================================================================
+
 yann_layout_server_assign_spot(_) ->
     Layout = get_layout(),
     ok = yann_layout_server:set_layout(Layout),
@@ -213,39 +256,6 @@ yann_layout_server_assign_spot(_) ->
     ProcessMap2 = yann_layout_server:get_process_map(),
     ExpectedNeuronMap2 = NeuronMap2,
     ExpectedProcessMap2 = ProcessMap2.
-
-yann_layout_server_assign_spot_to_pid(_) ->
-    NeuronMap = get_empty_neuron_map(),
-    Pid = list_to_pid("<0.123.0>"),
-    % Test assigning layer 1 position 3
-    NewNeuronMap1 = yann_layout_server:assign_spot_to_pid(1, 3, NeuronMap, Pid),
-    ExpectedNeuronMap1 = [
-        [none, none, Pid],
-        [none, none, none, none, none, none, none, none, none, none],
-        [none, none, none, none, none]
-    ],
-    ExpectedNeuronMap1 = NewNeuronMap1,
-    % Test assigning layer 3 position 1
-    NewNeuronMap2 = yann_layout_server:assign_spot_to_pid(3, 1, NeuronMap, Pid),
-    ExpectedNeuronMap2 = [
-        [none, none, none],
-        [none, none, none, none, none, none, none, none, none, none],
-        [Pid, none, none, none, none]
-    ],
-    ExpectedNeuronMap2 = NewNeuronMap2.
-
-yann_layout_server_create_neuron_map_from_layout(_) ->
-    Layout = get_layout(),
-    NeuronMap = get_empty_neuron_map(),
-    NeuronMap = yann_layout_server:create_neuron_map_from_layout(Layout).
-
-yann_layout_server_find_next_available_spot(_) ->
-    NeuronMap1 = get_empty_neuron_map(),
-    {1, 1} = yann_layout_server:find_next_available_spot(NeuronMap1),
-    NeuronMap2 = get_full_neuron_map(),
-    not_found = yann_layout_server:find_next_available_spot(NeuronMap2),
-    NeuronMap3 = get_mixed_neuron_map(),
-    {2, 3} = yann_layout_server:find_next_available_spot(NeuronMap3).
 
 yann_layout_server_init(_) ->
     ExpectedLayout = yann_layout:new([]),

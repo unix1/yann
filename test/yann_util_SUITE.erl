@@ -9,7 +9,7 @@
 -export([init_per_testcase/2]).
 -export([end_per_testcase/2]).
 
-%% Tests
+%% Unit Tests
 -export([
     yann_util_list_pos/1,
     yann_util_list_non_pos/1
@@ -21,6 +21,7 @@
 
 all() ->
     [
+        % Unit
         yann_util_list_pos,
         yann_util_list_non_pos
     ].
@@ -42,7 +43,7 @@ end_per_testcase(_, _Config) ->
 %%====================================================================
 
 %%====================================================================
-%% Tests
+%% Unit Tests
 %%====================================================================
 
 yann_util_list_pos(_) ->
