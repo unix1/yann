@@ -19,9 +19,10 @@
 -export([code_change/3, handle_call/3, handle_cast/2, handle_info/2, terminate/2]).
 
 -type state() :: #{
-    weights => weights(),
     data => data(),
-    data_queue => data_queue()
+    data_queue => data_queue(),
+    spot => yann_layout_server:spot(),
+    weights => weights()
 }.
 -type weights() :: [float()].
 -type data() :: array:array(). % array of floats
@@ -50,12 +51,17 @@ init({_Options}) ->
     % TODO (6) other options:
     %       - type of activation function
     %       - preset weights
-    NumberOfInputs = 10,
-    Data = initialize_data(NumberOfInputs + 1),
-    DataQueue = initialize_data_queue(NumberOfInputs),
-    Weights = initialize_weights(NumberOfInputs + 1),
-    State = #{weights => Weights, data => Data, data_queue => DataQueue},
-    {ok, State}.
+    case yann_layout_server:assign_spot() of
+        not_found ->
+            {stop, no_spot};
+        Spot ->
+            NumberOfInputs = 10,
+            Data = initialize_data(NumberOfInputs + 1),
+            DataQueue = initialize_data_queue(NumberOfInputs),
+            Weights = initialize_weights(NumberOfInputs + 1),
+            State = #{data => Data, data_queue => DataQueue, spot => Spot, weights => Weights},
+            {ok, State}
+    end.
 
 %%====================================================================
 %% API

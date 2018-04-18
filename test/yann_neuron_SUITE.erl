@@ -69,6 +69,17 @@ end_per_testcase(_, _Config) ->
 %% Helpers
 %%====================================================================
 
+get_layout() ->
+    InputLayer = #{type => 'input', number_of_neurons => 1},
+    HiddenLayer = #{type => 'hidden', number_of_neurons => 2},
+    OutputLayer = #{type => 'output', number_of_neurons => 1},
+    Layers = [
+        InputLayer,
+        HiddenLayer,
+        OutputLayer
+    ],
+    yann_layout:new(Layers).
+
 %%====================================================================
 %% Unit Tests
 %%====================================================================
@@ -163,6 +174,10 @@ yann_neuron_weighted_sum(_) ->
 %%====================================================================
 
 yann_neuron_start(_) ->
+    % Neuron should self-destruct when there are no spots in the network
+    {error, no_spot} = supervisor:start_child(yann_neuron_sup, []),
+    Layout = get_layout(),
+    ok = yann_layout_server:set_layout(Layout),
     {ok, _Pid} = supervisor:start_child(yann_neuron_sup, []).
 
 %%====================================================================
