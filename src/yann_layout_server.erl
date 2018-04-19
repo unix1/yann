@@ -126,7 +126,7 @@ handle_call({set_layout, Layout}, _From, #{status := init} = State) ->
     StateNew = State#{status := running, layout := Layout, neuron_map := NeuronMap},
     %% TODO trigger supervisor to start neuron workers
     {reply, ok, StateNew};
-handle_call({assign_spot}, {Pid, _}, #{status := init} = State) ->
+handle_call({assign_spot}, _From, #{status := init} = State) ->
     {reply, not_found, State};
 handle_call(
     {assign_spot},
