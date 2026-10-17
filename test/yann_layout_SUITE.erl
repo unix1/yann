@@ -235,7 +235,7 @@ yann_layout_server_assign_spot(_Config) ->
         Pid ! {self(), assign_spot},
         receive
             Spot -> Spot
-            after 1 -> ct:fail("No response received from test neuron process")
+        after 1 -> ct:fail("No response received from test neuron process")
         end
     end,
     _NeuronSpots = [AssignSpotFun(Pid) || Pid <- TestNeuronPids],
@@ -255,10 +255,10 @@ yann_layout_server_assign_spot(_Config) ->
         Pid ! {self(), stop},
         receive
             ok -> ok
-            after 1 -> ct:fail("No response received on stop from test neuron process")
+        after 1 -> ct:fail("No response received on stop from test neuron process")
         end
     end,
-    ok = lists:foreach(StopNeuronFun, [TestNeuronPidFull|TestNeuronPids]),
+    ok = lists:foreach(StopNeuronFun, [TestNeuronPidFull | TestNeuronPids]),
     % Verify server state is updated accordingly
     ExpectedNeuronMap2 = [
         [none, none, none],
@@ -300,4 +300,4 @@ yann_layout_server_set_layout(_Config) ->
 spawn_many(_Fun, 0, Acc) ->
     Acc;
 spawn_many(Fun, N, Acc) when N > 0 ->
-    spawn_many(Fun, N - 1, [spawn(Fun)|Acc]).
+    spawn_many(Fun, N - 1, [spawn(Fun) | Acc]).

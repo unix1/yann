@@ -32,6 +32,9 @@ jobs:
           restore-keys: |
             dialyzer-${{ runner.os }}-${{ steps.beam.outputs.otp-version }}-
 
+      - name: Format
+        run: make fmt-check
+
       - name: Compile
         run: make compile
 
