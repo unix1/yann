@@ -1,7 +1,5 @@
 -module(yann_neuron_SUITE).
 
--compile(nowarn_missing_spec).
-
 -include_lib("common_test/include/ct.hrl").
 
 %% ct functions
@@ -35,6 +33,7 @@
 %% ct functions
 %%====================================================================
 
+-spec all() -> [atom()].
 all() ->
     [
         % Unit
@@ -53,17 +52,21 @@ all() ->
         yann_neuron_start
     ].
 
+-spec init_per_suite(yann_test_utils:config()) -> yann_test_utils:config().
 init_per_suite(Config) ->
     ok = application:start(yann),
     Config.
 
-end_per_suite(_) ->
+-spec end_per_suite(yann_test_utils:config()) -> ok.
+end_per_suite(_Config) ->
     application:stop(yann),
     ok.
 
+-spec init_per_testcase(atom(), yann_test_utils:config()) -> yann_test_utils:config().
 init_per_testcase(_, Config) ->
     Config.
 
+-spec end_per_testcase(atom(), yann_test_utils:config()) -> ok.
 end_per_testcase(_, _Config) ->
     ok.
 
@@ -71,45 +74,51 @@ end_per_testcase(_, _Config) ->
 %% Helpers
 %%====================================================================
 
+-spec get_layout() -> yann_layout:layout().
 get_layout() ->
-    InputLayer = #{type => 'input', number_of_neurons => 1},
-    HiddenLayer = #{type => 'hidden', number_of_neurons => 2},
-    OutputLayer = #{type => 'output', number_of_neurons => 1},
-    Layers = [
-        InputLayer,
-        HiddenLayer,
-        OutputLayer
-    ],
-    yann_layout:new(Layers).
+    yann_layout:new([
+        #{type => 'input', number_of_neurons => 1},
+        #{type => 'hidden', number_of_neurons => 2},
+        #{type => 'output', number_of_neurons => 1}
+    ]).
 
 %%====================================================================
 %% Unit Tests
 %%====================================================================
 
-yann_neuron_append_input_to_data_queue_new(_) ->
+-spec yann_neuron_append_input_to_data_queue_new(yann_test_utils:config()) -> ok.
+yann_neuron_append_input_to_data_queue_new(_Config) ->
     DataQueue = array:set(1, queue:from_list([2, 3]), array:new(3, {default, queue:new()})),
     DataQueueActual = yann_neuron:append_input_to_data_queue({2, 5.5}, DataQueue),
     DataQueueExpected = array:set(2, queue:from_list([5.5]), array:set(1, queue:from_list([2, 3]), array:new(3, {default, queue:new()}))),
-    DataQueueExpected = DataQueueActual.
+    DataQueueExpected = DataQueueActual,
+    ok.
 
-yann_neuron_append_input_to_data_queue_existing(_) ->
+-spec yann_neuron_append_input_to_data_queue_existing(yann_test_utils:config()) -> ok.
+yann_neuron_append_input_to_data_queue_existing(_Config) ->
     DataQueue = array:set(1, queue:from_list([2, 3]), array:new(3, {default, queue:new()})),
     DataQueueActual = yann_neuron:append_input_to_data_queue({1, 5.5}, DataQueue),
     DataQueueExpected = array:set(1, queue:from_list([2, 3, 5.5]), array:new(3, {default, queue:new()})),
-    arrays_of_queues_equal(DataQueueActual, DataQueueExpected).
+    arrays_of_queues_equal(DataQueueActual, DataQueueExpected),
+    ok.
 
-yann_neuron_initialize_data(_) ->
+-spec yann_neuron_initialize_data(yann_test_utils:config()) -> ok.
+yann_neuron_initialize_data(_Config) ->
     Actual = yann_neuron:initialize_data(10),
     Expected = array:set(0, 1, array:new(10)),
-    Expected = Actual.
+    Expected = Actual,
+    ok.
 
-yann_neuron_initialize_data_from_data_queue_empty(_) ->
+-spec yann_neuron_initialize_data_from_data_queue_empty(yann_test_utils:config()) -> ok.
+yann_neuron_initialize_data_from_data_queue_empty(_Config) ->
     DataQueue = yann_neuron:initialize_data_queue(2),
     % Confirm nothing has changed
     DataExpected = yann_neuron:initialize_data(3),
-    {DataExpected, DataQueue} = yann_neuron:initialize_data_from_data_queue(DataQueue).
+    {DataExpected, DataQueue} = yann_neuron:initialize_data_from_data_queue(DataQueue),
+    ok.
 
-yann_neuron_initialize_data_from_data_queue_existing(_) ->
+-spec yann_neuron_initialize_data_from_data_queue_existing(yann_test_utils:config()) -> ok.
+yann_neuron_initialize_data_from_data_queue_existing(_Config) ->
     DataQueue0 = yann_neuron:initialize_data_queue(3),
     DataQueue1 = array:set(0, queue:in(3.0, queue:in(2.0, queue:in(1.0, queue:new()))), DataQueue0),
     DataQueue2 = array:set(1, queue:new(), DataQueue1),
@@ -127,14 +136,18 @@ yann_neuron_initialize_data_from_data_queue_existing(_) ->
     DataQueueExpected = DataQueueExpected3,
     {DataActual, DataQueueActual} = yann_neuron:initialize_data_from_data_queue(DataQueue),
     DataExpected = DataActual,
-    arrays_of_queues_equal(DataQueueExpected, DataQueueActual).
+    arrays_of_queues_equal(DataQueueExpected, DataQueueActual),
+    ok.
 
-yann_neuron_initialize_data_queue(_) ->
+-spec yann_neuron_initialize_data_queue(yann_test_utils:config()) -> ok.
+yann_neuron_initialize_data_queue(_Config) ->
     Actual = yann_neuron:initialize_data_queue(10),
     Expected = array:new(10, {default, queue:new()}),
-    Expected = Actual.
+    Expected = Actual,
+    ok.
 
-yann_neuron_initialize_weights(_) ->
+-spec yann_neuron_initialize_weights(yann_test_utils:config()) -> ok.
+yann_neuron_initialize_weights(_Config) ->
     Actual = yann_neuron:initialize_weights(1000),
     1000 = length(Actual),
     lists:foldl(
@@ -143,49 +156,61 @@ yann_neuron_initialize_weights(_) ->
         end,
         ok,
         Actual
-    ).
+    ),
+    ok.
 
-yann_neuron_input_to_data_or_queue_empty(_) ->
+-spec yann_neuron_input_to_data_or_queue_empty(yann_test_utils:config()) -> ok.
+yann_neuron_input_to_data_or_queue_empty(_Config) ->
     Data = array:new(3),
     DataQueue = array:new(3, {default, queue:new()}),
     {DataActual, DataQueueActual} = yann_neuron:input_to_data_or_queue({1, 123.4}, Data, DataQueue),
     DataExpected = array:set(1, 123.4, array:new(3)),
     DataQueueExpected = array:new(3, {default, queue:new()}),
     DataExpected = DataActual,
-    arrays_of_queues_equal(DataQueueExpected, DataQueueActual).
+    arrays_of_queues_equal(DataQueueExpected, DataQueueActual),
+    ok.
 
-yann_neuron_input_to_data_or_queue_taken(_) ->
+-spec yann_neuron_input_to_data_or_queue_taken(yann_test_utils:config()) -> ok.
+yann_neuron_input_to_data_or_queue_taken(_Config) ->
     Data = array:set(1, 111.1, array:new(3)),
     DataQueue = array:new(3, {default, queue:new()}),
     {DataActual, DataQueueActual} = yann_neuron:input_to_data_or_queue({1, 123.4}, Data, DataQueue),
     DataExpected = array:set(1, 111.1, array:new(3)),
     DataQueueExpected = array:set(1, queue:from_list([123.4]), array:new(3, {default, queue:new()})),
     DataExpected = DataActual,
-    arrays_of_queues_equal(DataQueueExpected, DataQueueActual).
+    arrays_of_queues_equal(DataQueueExpected, DataQueueActual),
+    ok.
 
-yann_neuron_sigmoid(_) ->
+-spec yann_neuron_sigmoid(yann_test_utils:config()) -> ok.
+yann_neuron_sigmoid(_Config) ->
     1.0 = yann_neuron:sigmoid(99.9),
-    0.5 = yann_neuron:sigmoid(0.0).
+    0.5 = yann_neuron:sigmoid(0.0),
+    ok.
 
-yann_neuron_weighted_sum(_) ->
+-spec yann_neuron_weighted_sum(yann_test_utils:config()) -> ok.
+yann_neuron_weighted_sum(_Config) ->
     2.0 = yann_neuron:weighted_sum([1.2, 2.0, 4.0, -1.0], [5.0, 3.0, -2.0, 2.0]),
-    +0.0 = yann_neuron:weighted_sum([], []).
+    +0.0 = yann_neuron:weighted_sum([], []),
+    ok.
 
 %%====================================================================
 %% Functional Tests
 %%====================================================================
 
-yann_neuron_start(_) ->
+-spec yann_neuron_start(yann_test_utils:config()) -> ok.
+yann_neuron_start(_Config) ->
     % Neuron should self-destruct when there are no spots in the network
     {error, no_spot} = supervisor:start_child(yann_neuron_sup, []),
     Layout = get_layout(),
     ok = yann_layout_server:set_layout(Layout),
-    {ok, _Pid} = supervisor:start_child(yann_neuron_sup, []).
+    {ok, _Pid} = supervisor:start_child(yann_neuron_sup, []),
+    ok.
 
 %%====================================================================
 %% Private
 %%====================================================================
 
+-spec arrays_of_queues_equal(array:array(queue:queue()), array:array(queue:queue())) -> ok.
 arrays_of_queues_equal(Array1, Array2) ->
     ArraySize1 = array:size(Array1),
     ArraySize2 = array:size(Array2),
