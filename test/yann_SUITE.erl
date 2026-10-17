@@ -18,23 +18,28 @@
 %% ct functions
 %%====================================================================
 
+-spec all() -> [atom()].
 all() ->
     [
         % Functional
         yann_start_neurons
     ].
 
+-spec init_per_suite(yann_test_utils:config()) -> yann_test_utils:config().
 init_per_suite(Config) ->
     ok = application:start(yann),
     Config.
 
-end_per_suite(_) ->
+-spec end_per_suite(yann_test_utils:config()) -> ok.
+end_per_suite(_Config) ->
     application:stop(yann),
     ok.
 
+-spec init_per_testcase(atom(), yann_test_utils:config()) -> yann_test_utils:config().
 init_per_testcase(_, Config) ->
     Config.
 
+-spec end_per_testcase(atom(), yann_test_utils:config()) -> ok.
 end_per_testcase(_, _Config) ->
     ok.
 
@@ -42,24 +47,14 @@ end_per_testcase(_, _Config) ->
 %% Helpers
 %%====================================================================
 
-get_layout() ->
-    InputLayer = #{type => 'input', number_of_neurons => 3},
-    HiddenLayer = #{type => 'hidden', number_of_neurons => 10},
-    OutputLayer = #{type => 'output', number_of_neurons => 5},
-    Layers = [
-        InputLayer,
-        HiddenLayer,
-        OutputLayer
-    ],
-    yann_layout:new(Layers).
-
 %%====================================================================
 %% Unit Tests
 %%====================================================================
 
-yann_start_neurons(_) ->
+-spec yann_start_neurons(yann_test_utils:config()) -> ok.
+yann_start_neurons(_Config) ->
     % Set layout and start neurons
-    Layout = get_layout(),
+    Layout = yann_test_utils:make_layout(),
     ok = yann:set_layout(Layout),
     Layout = yann_layout_server:get_layout(),
     ChildStartResults = yann:start_neurons(),
@@ -75,4 +70,5 @@ yann_start_neurons(_) ->
     end,
     ExpectedSpotValidation = lists:duplicate(18, true),
     ActualSpotValidation = lists:map(FunIsSpot, ChildSpots),
-    ExpectedSpotValidation = ActualSpotValidation.
+    ExpectedSpotValidation = ActualSpotValidation,
+    ok.

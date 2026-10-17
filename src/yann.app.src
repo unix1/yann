@@ -1,0 +1,10 @@
+{application, yann, [
+    {description, "Yet another neural network"},
+    {vsn, "0.1.0"},
+    {registered, [yann_sup]},
+    {applications, [kernel, stdlib]},
+    {mod, {yann_app, []}},
+    {env, []},
+    {modules, []},
+    {licenses, ["GPL-3.0-only"]}
+]}.
