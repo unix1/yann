@@ -74,14 +74,6 @@ end_per_testcase(_, _Config) ->
 %% Helpers
 %%====================================================================
 
--spec get_layout() -> yann_layout:layout().
-get_layout() ->
-    yann_layout:new([
-        #{type => 'input', number_of_neurons => 1},
-        #{type => 'hidden', number_of_neurons => 2},
-        #{type => 'output', number_of_neurons => 1}
-    ]).
-
 %%====================================================================
 %% Unit Tests
 %%====================================================================
@@ -201,7 +193,7 @@ yann_neuron_weighted_sum(_Config) ->
 yann_neuron_start(_Config) ->
     % Neuron should self-destruct when there are no spots in the network
     {error, no_spot} = supervisor:start_child(yann_neuron_sup, []),
-    Layout = get_layout(),
+    Layout = yann_test_utils:make_layout(),
     ok = yann_layout_server:set_layout(Layout),
     {ok, _Pid} = supervisor:start_child(yann_neuron_sup, []),
     ok.

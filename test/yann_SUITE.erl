@@ -47,14 +47,6 @@ end_per_testcase(_, _Config) ->
 %% Helpers
 %%====================================================================
 
--spec get_layout() -> yann_layout:layout().
-get_layout() ->
-    yann_layout:new([
-        #{type => 'input', number_of_neurons => 3},
-        #{type => 'hidden', number_of_neurons => 10},
-        #{type => 'output', number_of_neurons => 5}
-    ]).
-
 %%====================================================================
 %% Unit Tests
 %%====================================================================
@@ -62,7 +54,7 @@ get_layout() ->
 -spec yann_start_neurons(yann_test_utils:config()) -> ok.
 yann_start_neurons(_Config) ->
     % Set layout and start neurons
-    Layout = get_layout(),
+    Layout = yann_test_utils:make_layout(),
     ok = yann:set_layout(Layout),
     Layout = yann_layout_server:get_layout(),
     ChildStartResults = yann:start_neurons(),

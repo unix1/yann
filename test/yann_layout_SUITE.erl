@@ -74,14 +74,6 @@ end_per_testcase(_, _Config) ->
 %% Helpers
 %%====================================================================
 
--spec get_layout() -> yann_layout:layout().
-get_layout() ->
-    yann_layout:new([
-        #{type => 'input', number_of_neurons => 3},
-        #{type => 'hidden', number_of_neurons => 10},
-        #{type => 'output', number_of_neurons => 5}
-    ]).
-
 -spec get_empty_neuron_map() -> yann_layout:neuron_map().
 get_empty_neuron_map() ->
     [
@@ -136,19 +128,19 @@ get_neuron_fun() ->
 
 -spec yann_layout_get_number_of_layers(yann_test_utils:config()) -> ok.
 yann_layout_get_number_of_layers(_Config) ->
-    Layout = get_layout(),
+    Layout = yann_test_utils:make_layout(),
     3 = yann_layout:get_number_of_layers(Layout),
     ok.
 
 -spec yann_layout_get_number_of_neurons(yann_test_utils:config()) -> ok.
 yann_layout_get_number_of_neurons(_Config) ->
-    Layout = get_layout(),
+    Layout = yann_test_utils:make_layout(),
     [3, 10, 5] = yann_layout:get_number_of_neurons(Layout),
     ok.
 
 -spec yann_layout_new(yann_test_utils:config()) -> ok.
 yann_layout_new(_Config) ->
-    Layout = get_layout(),
+    Layout = yann_test_utils:make_layout(),
     3 = yann_layout:get_number_of_layers(Layout),
     10 = yann_layout:get_number_of_neurons(Layout, 2),
     ok.
@@ -212,7 +204,7 @@ yann_layout_server_assign_spot_to_pid(_Config) ->
 
 -spec yann_layout_server_create_neuron_map_from_layout(yann_test_utils:config()) -> ok.
 yann_layout_server_create_neuron_map_from_layout(_Config) ->
-    Layout = get_layout(),
+    Layout = yann_test_utils:make_layout(),
     NeuronMap = get_empty_neuron_map(),
     NeuronMap = yann_layout_server:create_neuron_map_from_layout(Layout),
     ok.
@@ -233,7 +225,7 @@ yann_layout_server_find_next_available_spot(_Config) ->
 
 -spec yann_layout_server_assign_spot(yann_test_utils:config()) -> ok.
 yann_layout_server_assign_spot(_Config) ->
-    Layout = get_layout(),
+    Layout = yann_test_utils:make_layout(),
     ok = yann_layout_server:set_layout(Layout),
     TestNeuronFun = get_neuron_fun(),
     % Spawn 18 neurons to fill the network + 1 neuron to test response when full
@@ -292,7 +284,7 @@ yann_layout_server_init(_Config) ->
 
 -spec yann_layout_server_set_layout(yann_test_utils:config()) -> ok.
 yann_layout_server_set_layout(_Config) ->
-    Layout = get_layout(),
+    Layout = yann_test_utils:make_layout(),
     ok = yann_layout_server:set_layout(Layout),
     Layout = yann_layout_server:get_layout(),
     NeuronMap = yann_layout_server:get_neuron_map(),
