@@ -1,5 +1,5 @@
 {application, yann, [
-    {description, "New project"},
+    {description, "Yet another neural network"},
     {vsn, "0.1.0"},
     {registered, [yann_sup]},
     {applications, [kernel, stdlib]},
