@@ -1,7 +1,5 @@
 -module(yann_SUITE).
 
--compile(nowarn_missing_spec).
-
 -include_lib("common_test/include/ct.hrl").
 
 %% ct functions
@@ -20,23 +18,28 @@
 %% ct functions
 %%====================================================================
 
+-spec all() -> [atom()].
 all() ->
     [
         % Functional
         yann_start_neurons
     ].
 
+-spec init_per_suite(yann_test_utils:config()) -> yann_test_utils:config().
 init_per_suite(Config) ->
     ok = application:start(yann),
     Config.
 
-end_per_suite(_) ->
+-spec end_per_suite(yann_test_utils:config()) -> ok.
+end_per_suite(_Config) ->
     application:stop(yann),
     ok.
 
+-spec init_per_testcase(atom(), yann_test_utils:config()) -> yann_test_utils:config().
 init_per_testcase(_, Config) ->
     Config.
 
+-spec end_per_testcase(atom(), yann_test_utils:config()) -> ok.
 end_per_testcase(_, _Config) ->
     ok.
 
@@ -44,22 +47,20 @@ end_per_testcase(_, _Config) ->
 %% Helpers
 %%====================================================================
 
+-spec get_layout() -> yann_layout:layout().
 get_layout() ->
-    InputLayer = #{type => 'input', number_of_neurons => 3},
-    HiddenLayer = #{type => 'hidden', number_of_neurons => 10},
-    OutputLayer = #{type => 'output', number_of_neurons => 5},
-    Layers = [
-        InputLayer,
-        HiddenLayer,
-        OutputLayer
-    ],
-    yann_layout:new(Layers).
+    yann_layout:new([
+        #{type => 'input', number_of_neurons => 3},
+        #{type => 'hidden', number_of_neurons => 10},
+        #{type => 'output', number_of_neurons => 5}
+    ]).
 
 %%====================================================================
 %% Unit Tests
 %%====================================================================
 
-yann_start_neurons(_) ->
+-spec yann_start_neurons(yann_test_utils:config()) -> ok.
+yann_start_neurons(_Config) ->
     % Set layout and start neurons
     Layout = get_layout(),
     ok = yann:set_layout(Layout),
@@ -77,4 +78,5 @@ yann_start_neurons(_) ->
     end,
     ExpectedSpotValidation = lists:duplicate(18, true),
     ActualSpotValidation = lists:map(FunIsSpot, ChildSpots),
-    ExpectedSpotValidation = ActualSpotValidation.
+    ExpectedSpotValidation = ActualSpotValidation,
+    ok.
