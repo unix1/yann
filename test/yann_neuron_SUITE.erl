@@ -1,5 +1,7 @@
 -module(yann_neuron_SUITE).
 
+-compile(nowarn_missing_spec).
+
 -include_lib("common_test/include/ct.hrl").
 
 %% ct functions
@@ -167,7 +169,7 @@ yann_neuron_sigmoid(_) ->
 
 yann_neuron_weighted_sum(_) ->
     2.0 = yann_neuron:weighted_sum([1.2, 2.0, 4.0, -1.0], [5.0, 3.0, -2.0, 2.0]),
-    0.0 = yann_neuron:weighted_sum([], []).
+    +0.0 = yann_neuron:weighted_sum([], []).
 
 %%====================================================================
 %% Functional Tests

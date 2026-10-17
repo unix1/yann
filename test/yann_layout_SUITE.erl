@@ -1,5 +1,7 @@
 -module(yann_layout_SUITE).
 
+-compile(nowarn_missing_spec).
+
 -include_lib("common_test/include/ct.hrl").
 
 %% ct functions
@@ -224,7 +226,7 @@ yann_layout_server_assign_spot(_) ->
             after 1 -> ct:fail("No response received from test neuron process")
         end
     end,
-    NeuronSpots = [[AssignSpotFun(Pid)] || Pid <- TestNeuronPids],
+    _ = [AssignSpotFun(Pid) || Pid <- TestNeuronPids],
     % Check server state to make sure pid gets assigned to maps
     18 = maps:size(yann_layout_server:get_process_map()),
     NeuronMap1 = yann_layout_server:get_neuron_map(),

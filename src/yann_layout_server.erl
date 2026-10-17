@@ -49,7 +49,7 @@
 %% when DOWN message is received during monitoring of neurons.
 
 -ifdef(TEST).
--compile(export_all).
+-compile([export_all, nowarn_export_all]).
 -endif.
 
 %%====================================================================

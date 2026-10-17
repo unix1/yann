@@ -1,15 +1,5 @@
-.erlang.mk
-.eunit
 .idea
 *.kdev4
-*.o
-*.plt
-_rel
-deps
-ebin/*.beam
-ebin/test
 erl_crash.dump
-logs
-relx*
-test/*.beam
-yann.d
+_build/
+.rebar3/

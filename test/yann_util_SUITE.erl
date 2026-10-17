@@ -1,5 +1,7 @@
 -module(yann_util_SUITE).
 
+-compile(nowarn_missing_spec).
+
 -include_lib("common_test/include/ct.hrl").
 
 %% ct functions
