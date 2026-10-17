@@ -25,6 +25,8 @@
 -export([get_process_map/0]).
 -export([set_layout/1]).
 
+-export_type([spot/0]).
+
 % Supervision
 -export([start_link/0, init/1]).
 
