@@ -38,8 +38,8 @@
 new(Layers) when is_list(Layers) ->
     % Fold instead of simple assignment to validate input
     F = fun(#{type := Type, number_of_neurons := N}, Acc) ->
-            [#{type => Type, number_of_neurons => N}|Acc]
-        end,
+        [#{type => Type, number_of_neurons => N} | Acc]
+    end,
     lists:foldr(F, [], Layers).
 
 %% @doc Get number of layers
@@ -58,7 +58,7 @@ get_number_of_layers(Layout) ->
 -spec get_number_of_neurons(Layout :: layout()) -> [pos_integer()].
 get_number_of_neurons(Layout) ->
     Fun = fun(#{number_of_neurons := NumberOfNeurons}, Acc) ->
-        [NumberOfNeurons|Acc]
+        [NumberOfNeurons | Acc]
     end,
     lists:foldr(Fun, [], Layout).
 

@@ -44,6 +44,8 @@
 -type spot() :: {pos_integer(), pos_integer()}.
 %% Address - layer and neuron index - of a neuron pid in a network
 
+-export_type([spot/0]).
+
 -type process_map() :: #{pid() => spot()}.
 %% Map used to store pid to network spot translation; useful for quick lookups
 %% when DOWN message is received during monitoring of neurons.
@@ -77,7 +79,7 @@ init([]) ->
 %% @doc Assign a spot to the calling process
 %%
 %% @end
--spec assign_spot() -> spot()|not_found.
+-spec assign_spot() -> spot() | not_found.
 assign_spot() ->
     gen_server:call(?MODULE, {assign_spot}).
 
@@ -139,10 +141,10 @@ handle_call(
     %% NOTE `Spot' may be equal to not_found
     {reply, Spot, NewState}.
 
--spec handle_cast(_, State) -> {noreply, State} when State::state().
+-spec handle_cast(_, State) -> {noreply, State} when State :: state().
 handle_cast(_Msg, State) -> {noreply, State}.
 
--spec handle_info(_, State) -> {noreply, State} when State::state().
+-spec handle_info(_, State) -> {noreply, State} when State :: state().
 handle_info(
     {'DOWN', _MonitorRef, process, Pid, _Reason},
     #{status := running, neuron_map := NeuronMap, process_map := ProcessMap} = State
@@ -152,12 +154,13 @@ handle_info(
     NewProcessMap = maps:remove(Pid, ProcessMap),
     NewState = State#{neuron_map := NewNeuronMap, process_map := NewProcessMap},
     {noreply, NewState};
-handle_info(_Msg, State) -> {noreply, State}.
+handle_info(_Msg, State) ->
+    {noreply, State}.
 
 -spec terminate(_, _) -> ok.
 terminate(_Reason, _State) -> ok.
 
--spec code_change(_, State, _) -> {ok, State} when State::state().
+-spec code_change(_, State, _) -> {ok, State} when State :: state().
 code_change(_OldVersion, State, _Extra) -> {ok, State}.
 
 %%====================================================================
@@ -198,7 +201,7 @@ assign_next_available_spot(NeuronMap, Pid) when is_pid(Pid) ->
 %% @private
 %%
 %% @end
--spec find_next_available_spot(neuron_map()) -> spot()|not_found.
+-spec find_next_available_spot(neuron_map()) -> spot() | not_found.
 find_next_available_spot(NeuronMap) ->
     % List of first available position in each layer
     LayersUnassignedIndexes = [yann_util:list_pos(none, Layer, 1) || Layer <- NeuronMap],
@@ -213,7 +216,7 @@ find_next_available_spot(NeuronMap) ->
     LayerIndex :: non_neg_integer(),
     NeuronIndex :: non_neg_integer(),
     NeuronMap :: neuron_map(),
-    Pid :: pid()|none
+    Pid :: pid() | none
 ) -> neuron_map().
 assign_spot_to_pid(LayerIndex, NeuronIndex, NeuronMap, Pid) ->
     Layer = lists:nth(LayerIndex, NeuronMap),
@@ -225,7 +228,7 @@ assign_spot_to_pid(LayerIndex, NeuronIndex, NeuronMap, Pid) ->
 %% @private
 %%
 %% @end
--spec add_pid_to_process_map(pid(), spot()|not_found, process_map()) -> process_map().
+-spec add_pid_to_process_map(pid(), spot() | not_found, process_map()) -> process_map().
 add_pid_to_process_map(_Pid, not_found, ProcessMap) ->
     ProcessMap;
 add_pid_to_process_map(Pid, Spot, ProcessMap) ->

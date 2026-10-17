@@ -16,8 +16,9 @@
 -export([start_link/0, init/1]).
 
 %% Helper macro for declaring children of supervisor
--define(CHILD(Id, Module, Args, Type), {Id, {Module, start_link, Args},
-        permanent, 5000, Type, [Module]}).
+-define(CHILD(Id, Module, Args, Type),
+    {Id, {Module, start_link, Args}, permanent, 5000, Type, [Module]}
+).
 
 %%====================================================================
 %% Supervision
@@ -29,7 +30,7 @@ start_link() ->
 
 -spec init([]) -> {ok, {{supervisor:strategy(), 0, 1}, [supervisor:child_spec()]}}.
 init([]) ->
-    {ok, { {one_for_one, 0, 1}, children()} }.
+    {ok, {{one_for_one, 0, 1}, children()}}.
 
 %%====================================================================
 %% Internal functions

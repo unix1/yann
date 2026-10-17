@@ -16,10 +16,8 @@ start_link() ->
 init([]) ->
     MaxRestart = 1,
     MaxTime = 3600,
-    ChildSpec = {yann_neuron,
-                 {yann_neuron, start_link, [self()]},
-                 permanent,
-                 5000, % shutdown time
-                 worker,
-                 [yann_neuron]},
+    ChildSpec =
+        {yann_neuron, {yann_neuron, start_link, [self()]}, permanent,
+            % shutdown time
+            5000, worker, [yann_neuron]},
     {ok, {{simple_one_for_one, MaxRestart, MaxTime}, [ChildSpec]}}.

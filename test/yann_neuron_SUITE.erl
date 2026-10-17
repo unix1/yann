@@ -82,7 +82,11 @@ end_per_testcase(_, _Config) ->
 yann_neuron_append_input_to_data_queue_new(_Config) ->
     DataQueue = array:set(1, queue:from_list([2, 3]), array:new(3, {default, queue:new()})),
     DataQueueActual = yann_neuron:append_input_to_data_queue({2, 5.5}, DataQueue),
-    DataQueueExpected = array:set(2, queue:from_list([5.5]), array:set(1, queue:from_list([2, 3]), array:new(3, {default, queue:new()}))),
+    DataQueueExpected = array:set(
+        2,
+        queue:from_list([5.5]),
+        array:set(1, queue:from_list([2, 3]), array:new(3, {default, queue:new()}))
+    ),
     DataQueueExpected = DataQueueActual,
     ok.
 
@@ -90,7 +94,9 @@ yann_neuron_append_input_to_data_queue_new(_Config) ->
 yann_neuron_append_input_to_data_queue_existing(_Config) ->
     DataQueue = array:set(1, queue:from_list([2, 3]), array:new(3, {default, queue:new()})),
     DataQueueActual = yann_neuron:append_input_to_data_queue({1, 5.5}, DataQueue),
-    DataQueueExpected = array:set(1, queue:from_list([2, 3, 5.5]), array:new(3, {default, queue:new()})),
+    DataQueueExpected = array:set(
+        1, queue:from_list([2, 3, 5.5]), array:new(3, {default, queue:new()})
+    ),
     arrays_of_queues_equal(DataQueueActual, DataQueueExpected),
     ok.
 
@@ -122,7 +128,9 @@ yann_neuron_initialize_data_from_data_queue_existing(_Config) ->
     DataExpected3 = array:set(3, 5.0, DataExpected2),
     DataExpected = DataExpected3,
     DataQueueExpected0 = yann_neuron:initialize_data_queue(3),
-    DataQueueExpected1 = array:set(0, queue:in(3.0, queue:in(2.0, queue:new())), DataQueueExpected0),
+    DataQueueExpected1 = array:set(
+        0, queue:in(3.0, queue:in(2.0, queue:new())), DataQueueExpected0
+    ),
     DataQueueExpected2 = array:set(1, queue:new(), DataQueueExpected1),
     DataQueueExpected3 = array:set(2, queue:new(), DataQueueExpected2),
     DataQueueExpected = DataQueueExpected3,
@@ -168,7 +176,9 @@ yann_neuron_input_to_data_or_queue_taken(_Config) ->
     DataQueue = array:new(3, {default, queue:new()}),
     {DataActual, DataQueueActual} = yann_neuron:input_to_data_or_queue({1, 123.4}, Data, DataQueue),
     DataExpected = array:set(1, 111.1, array:new(3)),
-    DataQueueExpected = array:set(1, queue:from_list([123.4]), array:new(3, {default, queue:new()})),
+    DataQueueExpected = array:set(
+        1, queue:from_list([123.4]), array:new(3, {default, queue:new()})
+    ),
     DataExpected = DataActual,
     arrays_of_queues_equal(DataQueueExpected, DataQueueActual),
     ok.
