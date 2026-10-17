@@ -25,8 +25,6 @@
 -export([get_process_map/0]).
 -export([set_layout/1]).
 
--export_type([spot/0]).
-
 % Supervision
 -export([start_link/0, init/1]).
 
@@ -45,6 +43,8 @@
 
 -type spot() :: {pos_integer(), pos_integer()}.
 %% Address - layer and neuron index - of a neuron pid in a network
+
+-export_type([spot/0]).
 
 -type process_map() :: #{pid() => spot()}.
 %% Map used to store pid to network spot translation; useful for quick lookups
