@@ -1,6 +1,6 @@
 -module(yann_layout_SUITE).
 
--compile(nowarn_missing_spec).
+%-compile(nowarn_missing_spec).
 
 -include_lib("common_test/include/ct.hrl").
 
@@ -33,6 +33,7 @@
 %% ct functions
 %%====================================================================
 
+-spec all() -> [atom()].
 all() ->
     [
         % Unit
@@ -49,19 +50,23 @@ all() ->
         yann_layout_server_set_layout
     ].
 
+-spec init_per_suite(yann_test_utils:config()) -> yann_test_utils:config().
 init_per_suite(Config) ->
     ok = application:start(yann),
     Config.
 
-end_per_suite(_) ->
+-spec end_per_suite(yann_test_utils:config()) -> ok.
+end_per_suite(_Config) ->
     application:stop(yann),
     ok.
 
+-spec init_per_testcase(atom(), yann_test_utils:config()) -> yann_test_utils:config().
 init_per_testcase(_, Config) ->
     % Will get {error, running} the first time, but that's ok
     supervisor:restart_child(yann_layout_sup, yann_layout_server),
     Config.
 
+-spec end_per_testcase(atom(), yann_test_utils:config()) -> ok.
 end_per_testcase(_, _Config) ->
     % Needed to start layout server with a clean slate
     supervisor:terminate_child(yann_layout_sup, yann_layout_server),
@@ -71,17 +76,15 @@ end_per_testcase(_, _Config) ->
 %% Helpers
 %%====================================================================
 
+-spec get_layout() -> yann_layout:layout().
 get_layout() ->
-    InputLayer = #{type => 'input', number_of_neurons => 3},
-    HiddenLayer = #{type => 'hidden', number_of_neurons => 10},
-    OutputLayer = #{type => 'output', number_of_neurons => 5},
-    Layers = [
-        InputLayer,
-        HiddenLayer,
-        OutputLayer
-    ],
-    yann_layout:new(Layers).
+    yann_layout:new([
+        #{type => 'input', number_of_neurons => 3},
+        #{type => 'hidden', number_of_neurons => 10},
+        #{type => 'output', number_of_neurons => 5}
+    ]).
 
+-spec get_empty_neuron_map() -> yann_layout:neuron_map().
 get_empty_neuron_map() ->
     [
         [none, none, none],
@@ -89,6 +92,7 @@ get_empty_neuron_map() ->
         [none, none, none, none, none]
     ].
 
+-spec get_mixed_neuron_map() -> yann_layout:neuron_map().
 get_mixed_neuron_map() ->
     Pid = get_pid(),
     [
@@ -97,6 +101,7 @@ get_mixed_neuron_map() ->
         lists:duplicate(5, Pid)
     ].
 
+-spec get_full_neuron_map() -> yann_layout:neuron_map().
 get_full_neuron_map() ->
     Pid = get_pid(),
     [
@@ -105,6 +110,7 @@ get_full_neuron_map() ->
         lists:duplicate(5, Pid)
     ].
 
+-spec get_pid() -> pid().
 get_pid() ->
     list_to_pid("<0.12345.0>").
 
@@ -113,6 +119,7 @@ get_pid() ->
 %%
 %% Useful when running tests against layout server and validating responses.
 %% @end
+-spec get_neuron_fun() -> fun(() -> ok).
 get_neuron_fun() ->
     fun TestNeuronLoop() ->
         receive
@@ -129,20 +136,27 @@ get_neuron_fun() ->
 %% Unit Tests
 %%====================================================================
 
-yann_layout_get_number_of_layers(_) ->
-    Layout = get_layout(),
-    3 = yann_layout:get_number_of_layers(Layout).
-
-yann_layout_get_number_of_neurons(_) ->
-    Layout = get_layout(),
-    [3, 10, 5] = yann_layout:get_number_of_neurons(Layout).
-
-yann_layout_new(_) ->
+-spec yann_layout_get_number_of_layers(yann_test_utils:config()) -> ok.
+yann_layout_get_number_of_layers(_Config) ->
     Layout = get_layout(),
     3 = yann_layout:get_number_of_layers(Layout),
-    10 = yann_layout:get_number_of_neurons(Layout, 2).
+    ok.
 
-yann_layout_server_assign_next_available_spot(_) ->
+-spec yann_layout_get_number_of_neurons(yann_test_utils:config()) -> ok.
+yann_layout_get_number_of_neurons(_Config) ->
+    Layout = get_layout(),
+    [3, 10, 5] = yann_layout:get_number_of_neurons(Layout),
+    ok.
+
+-spec yann_layout_new(yann_test_utils:config()) -> ok.
+yann_layout_new(_Config) ->
+    Layout = get_layout(),
+    3 = yann_layout:get_number_of_layers(Layout),
+    10 = yann_layout:get_number_of_neurons(Layout, 2),
+    ok.
+
+-spec yann_layout_server_assign_next_available_spot(yann_test_utils:config()) -> ok.
+yann_layout_server_assign_next_available_spot(_Config) ->
     Pid = get_pid(),
     NewPid = list_to_pid("<0.123.0>"),
     % Test assigning to empty neuron map
@@ -173,9 +187,11 @@ yann_layout_server_assign_next_available_spot(_) ->
     ExpectedSpot3 = not_found,
     ExpectedNeuronMap3 = get_full_neuron_map(),
     ExpectedNeuronMap3 = NewNeuronMap3,
-    ExpectedSpot3 = Spot3.
+    ExpectedSpot3 = Spot3,
+    ok.
 
-yann_layout_server_assign_spot_to_pid(_) ->
+-spec yann_layout_server_assign_spot_to_pid(yann_test_utils:config()) -> ok.
+yann_layout_server_assign_spot_to_pid(_Config) ->
     NeuronMap = get_empty_neuron_map(),
     Pid = list_to_pid("<0.123.0>"),
     % Test assigning layer 1 position 3
@@ -193,26 +209,32 @@ yann_layout_server_assign_spot_to_pid(_) ->
         [none, none, none, none, none, none, none, none, none, none],
         [Pid, none, none, none, none]
     ],
-    ExpectedNeuronMap2 = NewNeuronMap2.
+    ExpectedNeuronMap2 = NewNeuronMap2,
+    ok.
 
-yann_layout_server_create_neuron_map_from_layout(_) ->
+-spec yann_layout_server_create_neuron_map_from_layout(yann_test_utils:config()) -> ok.
+yann_layout_server_create_neuron_map_from_layout(_Config) ->
     Layout = get_layout(),
     NeuronMap = get_empty_neuron_map(),
-    NeuronMap = yann_layout_server:create_neuron_map_from_layout(Layout).
+    NeuronMap = yann_layout_server:create_neuron_map_from_layout(Layout),
+    ok.
 
-yann_layout_server_find_next_available_spot(_) ->
+-spec yann_layout_server_find_next_available_spot(yann_test_utils:config()) -> ok.
+yann_layout_server_find_next_available_spot(_Config) ->
     NeuronMap1 = get_empty_neuron_map(),
     {1, 1} = yann_layout_server:find_next_available_spot(NeuronMap1),
     NeuronMap2 = get_full_neuron_map(),
     not_found = yann_layout_server:find_next_available_spot(NeuronMap2),
     NeuronMap3 = get_mixed_neuron_map(),
-    {2, 3} = yann_layout_server:find_next_available_spot(NeuronMap3).
+    {2, 3} = yann_layout_server:find_next_available_spot(NeuronMap3),
+    ok.
 
 %%====================================================================
 %% Functional Tests
 %%====================================================================
 
-yann_layout_server_assign_spot(_) ->
+-spec yann_layout_server_assign_spot(yann_test_utils:config()) -> ok.
+yann_layout_server_assign_spot(_Config) ->
     Layout = get_layout(),
     ok = yann_layout_server:set_layout(Layout),
     TestNeuronFun = get_neuron_fun(),
@@ -226,7 +248,7 @@ yann_layout_server_assign_spot(_) ->
             after 1 -> ct:fail("No response received from test neuron process")
         end
     end,
-    _ = [AssignSpotFun(Pid) || Pid <- TestNeuronPids],
+    _NeuronSpots = [AssignSpotFun(Pid) || Pid <- TestNeuronPids],
     % Check server state to make sure pid gets assigned to maps
     18 = maps:size(yann_layout_server:get_process_map()),
     NeuronMap1 = yann_layout_server:get_neuron_map(),
@@ -257,28 +279,34 @@ yann_layout_server_assign_spot(_) ->
     NeuronMap2 = yann_layout_server:get_neuron_map(),
     ProcessMap2 = yann_layout_server:get_process_map(),
     ExpectedNeuronMap2 = NeuronMap2,
-    ExpectedProcessMap2 = ProcessMap2.
+    ExpectedProcessMap2 = ProcessMap2,
+    ok.
 
-yann_layout_server_init(_) ->
+-spec yann_layout_server_init(yann_test_utils:config()) -> ok.
+yann_layout_server_init(_Config) ->
     ExpectedLayout = yann_layout:new([]),
     ExpectedNeuronMap = [],
     ExpectedProcessMap = #{},
     ExpectedLayout = yann_layout_server:get_layout(),
     ExpectedNeuronMap = yann_layout_server:get_neuron_map(),
-    ExpectedProcessMap = yann_layout_server:get_process_map().
+    ExpectedProcessMap = yann_layout_server:get_process_map(),
+    ok.
 
-yann_layout_server_set_layout(_) ->
+-spec yann_layout_server_set_layout(yann_test_utils:config()) -> ok.
+yann_layout_server_set_layout(_Config) ->
     Layout = get_layout(),
     ok = yann_layout_server:set_layout(Layout),
     Layout = yann_layout_server:get_layout(),
     NeuronMap = yann_layout_server:get_neuron_map(),
     ExpectedNeuronMap = get_empty_neuron_map(),
-    ExpectedNeuronMap = NeuronMap.
+    ExpectedNeuronMap = NeuronMap,
+    ok.
 
 %%====================================================================
 %% Private
 %%====================================================================
 
+-spec spawn_many(fun(() -> ok), non_neg_integer(), [pid()]) -> [pid()].
 spawn_many(_Fun, 0, Acc) ->
     Acc;
 spawn_many(Fun, N, Acc) when N > 0 ->
